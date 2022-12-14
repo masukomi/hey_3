@@ -1,0 +1,54 @@
+#!/usr/bin/env raku
+
+use v6;
+use lib 'lib';
+use DB::SQLite;
+use XDG::GuaranteedResources;
+
+use Hey::Database;
+
+# TODO support
+sub MAIN('start', Str $project, *@args ) {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
+	my $connection = $db.connection;
+	my $time = DateTime.now();
+	if has-timer-args(@args) {
+		my $amount = @args[0].Int;
+		my $type = @args[2];
+		$time = $time.earlier($type => $amount);
+	}
+
+	my $event_hash = create-event($connection, "timer", $time.posix())
+	my $project_hash = find-or-create_project($project);
+	unless is-event-projected($event_hash<id>, $project_hash<id>) {
+		bind-event_project($event_hash<id>, $project_hash<id>);
+	}
+
+
+
+}
+sub has-timer-args(Array @args) returns Bool {
+	return (@args.elems > 2 and @args[2] == "ago" and @args[0].match(/^ \d+ $/))
+}
+sub split-timer-args(Array @args){
+	my %divided_args = {
+		"time_stuff" => [],
+		"project" => "",
+		"tags" => []
+	}
+
+	# FINISH ME
+	# if has-timer-args
+	#   shift off those
+	# project is next
+	# if followed by +
+	#   shift off that
+	#   everything else is a tag
+
+}
+sub guarantee-db() returns Str {
+	my $db_path = "data/hey/hey.db";
+	my $resource_path = guarantee-resource($db_path, Hey::Resourcer);
+
+	return $resource_path;
+}

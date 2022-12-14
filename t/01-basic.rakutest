@@ -1,0 +1,6 @@
+use Test;
+use Hey;
+
+pass "replace me";
+
+done-testing;

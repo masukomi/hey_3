@@ -1,0 +1,25 @@
+{
+  "auth": "zef:masukomi",
+  "authors": [
+    ""
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "blah blah blah",
+  "license": "Artistic-2.0",
+  "name": "Hey",
+  "perl": "6.d",
+  "provides": {
+    "Hey": "lib/Hey.rakumod"
+  },
+  "resources": [
+  ],
+  "source-url": "",
+  "tags": [
+  ],
+  "test-depends": [
+  ],
+  "version": "0.0.1"
+}
