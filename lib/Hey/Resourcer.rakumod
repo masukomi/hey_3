@@ -14,7 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # YOUR CONTRIBUTIONS, FINANCIAL, OR CODE, TO MAKING THIS A BETTER TOOL
-# ARE GREATLY APPRECIATED. SEE https://TooLoo.dev FOR DETAILS
+# ARE GREATLY APPRECIATED. SEE https://interrupttracker.com FOR DETAILS
 
 
 use XDG::GuaranteedResources::AbstractResourcer;
