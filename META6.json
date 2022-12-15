@@ -21,6 +21,7 @@
     "Terminal::ANSIColor",
     "Terminal::Width",
     "Text::MiscUtils",
+    "Time::Duration",
     "XDG::BaseDirectory",
     "XDG::GuaranteedResources"
   ],

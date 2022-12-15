@@ -27,12 +27,24 @@ our sub find-ongoing-events(Str $event_type, DB::Connection $connection) returns
 		default {nothing(Array);}
 	}
 }
-our sub find-last-event(DB::Connection $connection) returns Maybe[Hash] is export {
+our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connection) returns Array is export {
 	my $sql = q:to/END/;
-		SELECT * from events order by id DESC LIMIT 1;
+		SELECT * from events
+		WHERE type = ?
+	          AND started_at >= ?
+		order by id DESC LIMIT 1;
 	END
 
-	given $connection.query($sql).hash {
+	$connection.query($sql, $type, $epoch_since).hashes.Array;
+}
+our sub find-last-event(Str $type, DB::Connection $connection) returns Maybe[Hash] is export {
+	my $sql = q:to/END/;
+		SELECT * from events
+		WHERE type = ?
+		order by id DESC LIMIT 1;
+	END
+
+	given $connection.query($sql, $type).hash {
 		when $_.elems > 0 {something($_)}
 		default {nothing(Hash);}
 	}
@@ -47,14 +59,14 @@ our sub create-event(DB::Connection $connection,
 	END
 	my $statement_handle = $connection.prepare($insert_sql);
 	my $rows_changed = $statement_handle.execute([$started_at, $event_type]);
-	return find-last-event($connection).value; # there damn well better be one
+	return find-last-event($event_type, $connection).value; # there damn well better be one
 }
 
 
 our sub stop-event(DB::Connection $connection,
 				   Int $stopped_at
 				  ) returns Bool is export {
-	my $maybe_last_event = find-last-event($connection);
+	my $maybe_last_event = find-last-event("timer", $connection);
 	return False unless $maybe_last_event ~~ Some;
 
 	my $last_event_id = $maybe_last_event.value<id>;

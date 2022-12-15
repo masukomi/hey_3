@@ -84,7 +84,16 @@ multi sub MAIN("stop",
 	!! say("No timer was running");
 
 }
-
+multi sub MAIN("log") {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
+	my $connection = $db.db;
+	#TODO limit & group by day, or week or whatever
+	my @timers = timers-since(0, $connection);
+	for @timers -> %timer {
+		%timer<projects> = timer-projects(%timer, $connection);
+	}
+	display-timers-as-table(@timers, "All Timers");
+}
 multi sub MAIN("running") {
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
