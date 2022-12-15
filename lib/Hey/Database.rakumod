@@ -7,9 +7,29 @@ use Definitely;
 # find-last-event
 # create-event
 # stop-event
+# find-ongoing-events
+#
+
+#= a list of ongoing events ordered by oldest first
+our sub find-ongoing-events(Str $event_type, DB::Connection $connection) returns Maybe[Array] is export {
+
+	my $sql = q:to/END/;
+		SELECT * from events
+		where ended_at is null
+		and type = ?
+		order by started_at ASC
+	END
+
+	given $connection.query($sql, $event_type).hashes {
+		when $_.elems > 0 {
+			something($_.Array)
+		}
+		default {nothing(Array);}
+	}
+}
 our sub find-last-event(DB::Connection $connection) returns Maybe[Hash] is export {
 	my $sql = q:to/END/;
-		SELECT * from events order by started_at DESC LIMIT 1;
+		SELECT * from events order by id DESC LIMIT 1;
 	END
 
 	given $connection.query($sql).hash {
@@ -58,6 +78,7 @@ our sub stop-event(DB::Connection $connection,
 # bind-event-project
 
 our sub bind-event-project(Int $event_id, Int $project_id, DB::Connection $connection) is export {
+
 	unless is-event-projected($event_id, $project_id, $connection) {
 		my $insert_sql = qq:to/END/;
 		INSERT INTO events_projects (event_id, project_id)
@@ -109,6 +130,22 @@ our sub find-project(Str $project,DB::Connection $connection) returns Maybe[Hash
 	}
 }
 
+our sub find-projects-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
+	my $query_sql = qq:to/END/;
+	select project_id from events_projects where event_id = $event_hash<id>
+	END
+	my $project_ids = $connection.query($query_sql).array.Array;
+	return $project_ids if $project_ids.elems == 0;
+	return find-projects-by-id($project_ids, $connection);
+}
+
+our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) returns Array is export {
+	my $sql = q:to/END/;
+		SELECT id, name from projects where id in (?);
+	END
+
+	return $connection.query($sql, $project_ids.join(", ")).hashes.Array;
+}
 
 
 

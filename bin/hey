@@ -7,15 +7,27 @@ use XDG::GuaranteedResources;
 use Listicles;
 use Hey::Database;
 use Hey::Resourcer;
+use Hey::Timer;
+use DateTime::Format;
+use Definitely;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
-constant time-units = <second seconds minute minutes hour hours day days week weeks month months year years>;
+constant time_units = <second seconds minute minutes hour hours day days week weeks month months year years>.Array;
+constant time_regexp = /^ (\d ** 1..2) [ ":" (\d ** 2) ]?/;
+# ex                         04           :   30
+#                             4           :   30
+#                             4
 
+# hey start @my_proj +tag1 +tag2
+# hey start at 4 @my_proj +tag1 +tag2
+# hey start at 4:30 @my_proj +tag1 +tag2
+# hey start 4 minutes ago @my_proj +tag1 +tag2
+# hey start 2 hours ago @my_proj +tag1
 
 # TODO support
 multi sub MAIN('start',
-		 *@args #= additional projects & tags (e.g. @proj2, +tag1 +tag2)
+		 *@args #= time adjustment, project, & tags
 		) {
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
@@ -40,9 +52,19 @@ multi sub MAIN('start',
 			tag-event($tag, $event_hash<id>, $connection);
 		}
 	}
-	say("Started Timer for " ~ %compiled_args<projects>.join(", "));
+	say("Started Timer for "
+		~ %compiled_args<projects>.join(", ")
+		~ " at "
+		~ datestring($time)
+	   );
 
 }
+
+
+# hey stop at 4
+# hey stop at 4:30
+# hey stop 4 minutes ago
+# hey stop 2 hours ago
 
 multi sub MAIN("stop",
 		*@args #= optional time adjustments (e.g. 4 minutes ago)
@@ -58,42 +80,106 @@ multi sub MAIN("stop",
 	}
 
 	stop-event($connection, $time.posix())
-	?? say("Stopped")
+	?? say("Stopped at " ~ datestring($time))
 	!! say("No timer was running");
 
+}
+
+multi sub MAIN("running") {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
+	my $connection = $db.db;
+	my $timers = current-timers($connection);
+	if $timers ~~ Some {
+		my $timers_value = $timers.value;
+		for $timers_value.Array -> $timer_hash {
+			my $projects = timer-projects($timer_hash, $connection);
+			my @project_names = $projects.map({$_<name>});
+			@project_names.push("[No Associated Projects]") if @project_names.is-empty;
+			say("Timer started at "
+			~ datestring(DateTime.new($timer_hash.<started_at>))
+			~ " for "
+			~ @project_names.sort.join(", "))
+		}
+	} else {
+		say("No timer running.");
+	}
 }
 
 #-----
 # SUPPORT METHODS
 sub has-timer-args(@args) returns Bool {
-	return (@args.elems > 2
+	# 4 minutes ago
+	# at 12:30, at 12
+
+	return True if has-ago-timer-args(@args);
+	return has-at-timer-args(@args);
+}
+sub has-ago-timer-args(@args) returns Bool {
+	return ! ! (@args.elems > 2
 			and @args[2] eq "ago"
 			and @args[0].match(/^ \d+ $/)
-			and time-units.includes(@args[1])
+			and time_units.includes(@args[1])
 		   );
 }
-
-sub adjust-date-time(DateTime $dt, Array @time_stuff){
-	# @time_stuff = [4, "days", "ago"]
-	# could add support for "hence" in addition to "ago"... seems silly though.
-	$dt.earlier(@time_stuff[1].lc => @time_stuff[0])
+sub has-at-timer-args(@args) returns Bool {
+	return ! ! (@args.elems > 1
+		   and @args[0] eq "at"
+		   and @args[1].match(time_regexp))
 }
 
-sub compile-timer-args(@args){
+sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
+	# @time_stuff = [4, "days", "ago"]
+	# could add support for "hence" in addition to "ago"... seems silly though.
+	return $dt if @time_stuff.is-empty;
+	if has-ago-timer-args(@time_stuff) {
+		$dt.earlier([Pair.new(@time_stuff[1].lc, @time_stuff[0])])
+	} else {
+		my $match_data = @time_stuff[1].match(time_regexp);
+		my $hour = $match_data[0].Int;
+		my $minutes = $match_data.elems > 1
+					   ?? $match_data[1].Int
+					   !! 0;
+		# swap to 24 hour time
+		$hour += 12 if $hour < 12;
+		my $now = DateTime.now();
+		my $then = my $dt = DateTime.new(
+			year    => $now.year,
+			month   => $now.month,
+			day     => $now.day,
+			hour    => $hour,
+			minute  => $minutes,
+		);
+		if $hour < $now.hour {
+			# i see you left one running from yesterday
+			$then = $then.subtract( days => 1 );
+		}
+		return $then
+	}
+}
+
+sub extract-time-adjustment-args(@args) returns Array {
+	if has-ago-timer-args(@args) {
+		return @args[0..2].Array;
+	} elsif has-at-timer-args(@args) {
+		return @args[0..1].Array;
+	}
+	return [];
+
+}
+sub compile-timer-args(@args) returns Hash {
 	my @inner_args = @args;
-	my @time_stuff = [];
-	if has-timer-args(@inner_args) {
-		for (0..2) { @time_stuff.push: @inner_args.shift() };
-		@time_stuff[0] = @time_stuff[0].Int;
+	my $time_stuff = extract-time-adjustment-args(@args);
+	if $time_stuff.elems > 0 {
+		@inner_args = @inner_args.splice($time_stuff.elems)
 	}
 
-	my @projects = @inner_args.grep({.starts-with('@')}).map({substr($_, 1)});
-	my @tags = @inner_args.grep({ $_.starts-with("+") }).map({substr($_, 1)});
+	my $projects = @inner_args.grep({.starts-with('@')}).map({substr($_, 1)});
+	my $tags = @inner_args.grep({ $_.starts-with("+") }).map({substr($_, 1)});
 
 	my %compiled_args = (
-		"time_stuff" => @time_stuff,
-		"projects" => @projects,
-		"tags" => @tags
+		"time_stuff" => $time_stuff,
+		"projects" => $projects,
+		"tags" => $tags
 	);
 	return %compiled_args;
 }
@@ -104,4 +190,8 @@ sub guarantee-db() returns Str {
 	my $resource_path = guarantee-resource($db_path, Hey::Resourcer);
 
 	return $resource_path;
+}
+
+sub datestring(DateTime $dt) returns Str {
+	strftime("%a, %H:%M", $dt);
 }

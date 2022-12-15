@@ -9,6 +9,7 @@
     "CLI::Version",
     "Color",
     "DB::SQLite",
+    "DateTime::Format",
     "Definitely",
     "File::Find",
     "HTTP::Status",
@@ -29,7 +30,8 @@
   "perl": "6.d",
   "provides": {
     "Hey::Resourcer": "lib/Hey/Resourcer.rakumod",
-    "Hey::Database": "lib/Hey/Database.rakumod"
+    "Hey::Database": "lib/Hey/Database.rakumod",
+    "Hey::Timer": "lib/Hey/Timer.rakumod"
   },
   "resources": [
   ],
