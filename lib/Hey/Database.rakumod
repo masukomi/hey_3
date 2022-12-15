@@ -1,30 +1,27 @@
 unit module Hey::Database;
 use DB::SQLite;
-use Definititely;
+use Definitely;
 
 
 # Events
 # find-last-event
 # create-event
 # stop-event
-our sub find-last-event(DB::Connection $connection) returns Maybe[Hash] {
+our sub find-last-event(DB::Connection $connection) returns Maybe[Hash] is export {
 	my $sql = q:to/END/;
 		SELECT * from events order by started_at DESC LIMIT 1;
 	END
 
-	given $connection.query($sql).hash;
-	when $_.elems > 0 {
-		something($_);
-	}
-	default {
-		nothing(Hash)
+	given $connection.query($sql).hash {
+		when $_.elems > 0 {something($_)}
+		default {nothing(Hash);}
 	}
 }
 
 our sub create-event(DB::Connection $connection,
 					 Str $event_type,
-					 DateTime $started_at = DateTime.now().posix()
-					) returns Hash {
+					 Int $started_at
+					) returns Hash is export {
 	my $insert_sql = q:to/END/;
 	INSERT INTO events (started_at, type) VALUES (?, ?)
 	END
@@ -35,17 +32,18 @@ our sub create-event(DB::Connection $connection,
 
 
 our sub stop-event(DB::Connection $connection,
-				   DateTime $stopped_at DateTime.now().posix()
-				  ) return Bool {
+				   Int $stopped_at
+				  ) returns Bool is export {
 	my $maybe_last_event = find-last-event($connection);
-	return False unless $last_event ~~ Some;
+	return False unless $maybe_last_event ~~ Some;
 
-	my $last_event_id = $last_event.value<id>;
+	my $last_event_id = $maybe_last_event.value<id>;
 	my $update_sql = qq:to/END/;
-	UPDATE events set stopped_at = $stopped_at
+	UPDATE events set ended_at = $stopped_at
+	WHERE id = $last_event_id
 	END
 	my $statement_handle = $connection.prepare($update_sql);
-	my $statement_handle.execute(); # or go boom
+	$statement_handle.execute(); # or go boom
 	return True;
 }
 
@@ -58,9 +56,9 @@ our sub stop-event(DB::Connection $connection,
 # find-project
 # create-project
 # bind-event-project
-#
-our sub bind-event-project(Int $event_id, Int $project_id, DB::Connection $connection) {
-	unless is-event-projected($event_id, $tag_hash<id>, "tag") {
+
+our sub bind-event-project(Int $event_id, Int $project_id, DB::Connection $connection) is export {
+	unless is-event-projected($event_id, $project_id, $connection) {
 		my $insert_sql = qq:to/END/;
 		INSERT INTO events_projects (event_id, project_id)
 		VALUES ($event_id, $project_id);
@@ -69,9 +67,9 @@ our sub bind-event-project(Int $event_id, Int $project_id, DB::Connection $conne
 	}
 }
 
-our sub is-event-projected(Int $event_id, Int $project_id) returns Bool {
+our sub is-event-projected(Int $event_id, Int $project_id, DB::Connection $connection) returns Bool is export {
 	my $query_sql = qq:to/END/;
-	SELECT count(*) from event_tags
+	SELECT count(*) from events_projects
 	WHERE
 	  event_id = $event_id
 	  AND project_id = $project_id
@@ -82,17 +80,15 @@ our sub is-event-projected(Int $event_id, Int $project_id) returns Bool {
 
 
 
-our sub tag-project(Str $tag, Int $project_id, DB::Connection $connection) {
-
-
 # Takes in a project, returns the id of the newly created project
 our sub create-project(Str $project, DB::Connection $connection) returns Hash is export {
 	my $insert_sql = q:to/END/;
 	INSERT INTO projects (name) VALUES (?)
 	END
 	my $statement_handle = $connection.prepare($insert_sql);
-	my $rows_changed = $statement_handle.execute([$project]);
-	return find-project($project);
+	my $rows_changed = $statement_handle.execute([$project.subst(/^ "@"/, "")]);
+	my $found_project_hash = find-project($project, $connection);
+	return unwrap($found_project_hash, "Couldn't find the project I just created for $project");
 }
 
 our sub find-or-create-project(Str $project, DB::Connection $connection) returns Hash is export {
@@ -104,15 +100,12 @@ our sub find-or-create-project(Str $project, DB::Connection $connection) returns
 
 our sub find-project(Str $project,DB::Connection $connection) returns Maybe[Hash] is export {
 	my $sql = q:to/END/;
-		SELECT id, name from projects where name = $name LIMIT 1;
+		SELECT id, name from projects where name = ? LIMIT 1;
 	END
 
-	given $connection.query($sql, name=> $project).hash;
-	when $_.elems > 0 {
-		something($_);
-	}
-	default {
-		nothing(Hash)
+	given $connection.query($sql, $project).hash {
+		when $_.elems > 0 {something($_)}
+		default {nothing(Hash)}
 	}
 }
 
@@ -126,9 +119,9 @@ our sub find-project(Str $project,DB::Connection $connection) returns Maybe[Hash
 # tag-event
 
 
-our sub tag-event(Str $tag, Int $event_id, DB::Connection $connection) {
-	my $tag_hash = $find-or-create-tag($tag.lc, $connection);
-	unless is-thing-tagged($event_id, $tag_hash<id>, "tag") {
+our sub tag-event(Str $tag, Int $event_id, DB::Connection $connection) is export {
+	my $tag_hash = find-or-create-tag($tag.lc, $connection);
+	unless is-thing-tagged($event_id, $tag_hash<id>, "tag", $connection) {
 		my $insert_sql = qq:to/END/;
 		INSERT INTO events_tags (event_id, tag_id)
 		VALUES ($event_id, $tag_hash<id>);
@@ -137,9 +130,9 @@ our sub tag-event(Str $tag, Int $event_id, DB::Connection $connection) {
 		$connection.prepare($insert_sql).execute();
 	}
 }
-our sub tag-project(Str $tag, Int $project_id, DB::Connection $connection) {
-	my $tag_hash = $find-or-create-tag($tag.lc, $connection);
-	unless is-thing-tagged($project_id, $tag_hash<id>, "project") {
+our sub tag-project(Str $tag, Int $project_id, DB::Connection $connection) is export {
+	my $tag_hash = find-or-create-tag($tag.lc, $connection);
+	unless is-thing-tagged($project_id, $tag_hash<id>, "project", $connection) {
 		my $insert_sql = qq:to/END/;
 		INSERT INTO projects_tags (project_id, tag_id)
 		VALUES ($project_id, $tag_hash<id>);
@@ -149,9 +142,9 @@ our sub tag-project(Str $tag, Int $project_id, DB::Connection $connection) {
 	}
 }
 
-our sub is-thing-tagged(Int $event_id, Int $tag_id, Str $thing_type) returns Bool {
+our sub is-thing-tagged(Int $event_id, Int $tag_id, Str $thing_type, DB::Connection $connection) returns Bool is export {
 	my $query_sql = qq:to/END/;
-	SELECT count(*) from event_tags
+	SELECT count(*) from events_tags
 	WHERE
 	  $($thing_type)_id = $event_id
 	  AND tag_id = $tag_id
@@ -167,7 +160,7 @@ our sub create-tag(Str $tag, DB::Connection $connection) returns Hash is export 
 	END
 	my $statement_handle = $connection.prepare($insert_sql);
 	my $rows_changed = $statement_handle.execute([$tag]);
-	return find-tag($tag);
+	return find-tag($tag, $connection).value;
 }
 
 our sub find-or-create-tag(Str $tag, DB::Connection $connection) returns Hash is export {
@@ -182,11 +175,8 @@ our sub find-tag(Str $tag,DB::Connection $connection) returns Maybe[Hash] is exp
 		SELECT id, name from tags where name = $name LIMIT 1;
 	END
 
-	given $connection.query($sql, name=> $tag).hash;
-	when $_.elems > 0 {
-		something($_);
-	}
-	default {
-		nothing(Hash)
+	given $connection.query($sql, name=> $tag).hash {
+		when $_.elems > 0 {something($_)}
+		default {nothing(Hash)}
 	}
 }

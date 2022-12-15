@@ -4,48 +4,101 @@ use v6;
 use lib 'lib';
 use DB::SQLite;
 use XDG::GuaranteedResources;
-
+use Listicles;
 use Hey::Database;
+use Hey::Resourcer;
+
+# alas, these come from Date.pm6 but they're not
+# extractable from it :(
+constant time-units = <second seconds minute minutes hour hours day days week weeks month months year years>;
+
 
 # TODO support
-sub MAIN('start', Str $project, *@args ) {
-	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
-	my $connection = $db.connection;
+multi sub MAIN('start',
+		 *@args #= additional projects & tags (e.g. @proj2, +tag1 +tag2)
+		) {
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
 	my $time = DateTime.now();
-	if has-timer-args(@args) {
-		my $amount = @args[0].Int;
-		my $type = @args[2];
-		$time = $time.earlier($type => $amount);
+	my %compiled_args = compile-timer-args(@args);
+
+	if %compiled_args<projects>.elems == 0 {
+		die("must specify at least one project to start a timer.");
 	}
 
-	my $event_hash = create-event($connection, "timer", $time.posix())
-	my $project_hash = find-or-create_project($project);
-	unless is-event-projected($event_hash<id>, $project_hash<id>) {
-		bind-event_project($event_hash<id>, $project_hash<id>);
+	if %compiled_args<time_stuff>.elems > 0 {
+		$time = adjust-date-time($time, %compiled_args<time_stuff>)
 	}
 
-
+	my $event_hash = create-event($connection, "timer", $time.posix());
+	# TODO figure out why i need .Array here
+	# it's $["\@foo"] without it and ["\@foo"] with it
+    for %compiled_args<projects>.Array -> $project_name {
+		my $project_hash = find-or-create-project($project_name, $connection);
+		bind-event-project($event_hash<id>, $project_hash<id>, $connection);
+		for %compiled_args<tags>.Array -> $tag { # may be empty list
+			tag-event($tag, $event_hash<id>, $connection);
+		}
+	}
+	say("Started Timer for " ~ %compiled_args<projects>.join(", "));
 
 }
-sub has-timer-args(Array @args) returns Bool {
-	return (@args.elems > 2 and @args[2] == "ago" and @args[0].match(/^ \d+ $/))
-}
-sub split-timer-args(Array @args){
-	my %divided_args = {
-		"time_stuff" => [],
-		"project" => "",
-		"tags" => []
+
+multi sub MAIN("stop",
+		*@args #= optional time adjustments (e.g. 4 minutes ago)
+		) {
+
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $time = DateTime.now();
+	my %compiled_args = compile-timer-args(@args);
+
+	if %compiled_args<time_stuff>.elems > 0 {
+		$time = adjust-date-time($time, %compiled_args<time_stuff>)
 	}
 
-	# FINISH ME
-	# if has-timer-args
-	#   shift off those
-	# project is next
-	# if followed by +
-	#   shift off that
-	#   everything else is a tag
+	stop-event($connection, $time.posix())
+	?? say("Stopped")
+	!! say("No timer was running");
 
 }
+
+#-----
+# SUPPORT METHODS
+sub has-timer-args(@args) returns Bool {
+	return (@args.elems > 2
+			and @args[2] eq "ago"
+			and @args[0].match(/^ \d+ $/)
+			and time-units.includes(@args[1])
+		   );
+}
+
+sub adjust-date-time(DateTime $dt, Array @time_stuff){
+	# @time_stuff = [4, "days", "ago"]
+	# could add support for "hence" in addition to "ago"... seems silly though.
+	$dt.earlier(@time_stuff[1].lc => @time_stuff[0])
+}
+
+sub compile-timer-args(@args){
+	my @inner_args = @args;
+	my @time_stuff = [];
+	if has-timer-args(@inner_args) {
+		for (0..2) { @time_stuff.push: @inner_args.shift() };
+		@time_stuff[0] = @time_stuff[0].Int;
+	}
+
+	my @projects = @inner_args.grep({.starts-with('@')}).map({substr($_, 1)});
+	my @tags = @inner_args.grep({ $_.starts-with("+") }).map({substr($_, 1)});
+
+	my %compiled_args = (
+		"time_stuff" => @time_stuff,
+		"projects" => @projects,
+		"tags" => @tags
+	);
+	return %compiled_args;
+}
+
+
 sub guarantee-db() returns Str {
 	my $db_path = "data/hey/hey.db";
 	my $resource_path = guarantee-resource($db_path, Hey::Resourcer);

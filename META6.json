@@ -6,13 +6,30 @@
   "build-depends": [
   ],
   "depends": [
+    "CLI::Version",
+    "Color",
+    "DB::SQLite",
+    "Definitely",
+    "File::Find",
+    "HTTP::Status",
+    "JSON::Fast",
+    "Listicles",
+    "Prettier::Table",
+    "TOML",
+    "Template6",
+    "Terminal::ANSIColor",
+    "Terminal::Width",
+    "Text::MiscUtils",
+    "XDG::BaseDirectory",
+    "XDG::GuaranteedResources"
   ],
-  "description": "blah blah blah",
-  "license": "Artistic-2.0",
+  "description": "Time & Iterruption Tracker",
+  "license": "AGPL-3.0-or-later",
   "name": "Hey",
   "perl": "6.d",
   "provides": {
-    "Hey": "lib/Hey.rakumod"
+    "Hey::Resourcer": "lib/Hey/Resourcer.rakumod",
+    "Hey::Database": "lib/Hey/Database.rakumod"
   },
   "resources": [
   ],
