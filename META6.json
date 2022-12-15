@@ -35,6 +35,7 @@
     "Hey::Timer": "lib/Hey/Timer.rakumod"
   },
   "resources": [
+    "data/hey/hey.db"
   ],
   "source-url": "https://github.com/masukomi/hey_3",
   "tags": [
@@ -42,5 +43,5 @@
   ],
   "test-depends": [
   ],
-  "version": "1.0.0-beta1"
+  "version": "1.0.0-beta.1"
 }
