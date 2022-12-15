@@ -153,6 +153,14 @@ our sub find-projects-for-event(Hash $event_hash, DB::Connection $connection) re
 	return $project_ids if $project_ids.elems == 0;
 	return find-projects-by-id($project_ids, $connection);
 }
+our sub find-tags-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
+	my $query_sql = qq:to/END/;
+	select tag_id from events_tags where event_id = $event_hash<id>
+	END
+	my $tag_ids = $connection.query($query_sql).array.Array;
+	return $tag_ids if $tag_ids.elems == 0;
+	return find-tags-by-id($tag_ids, $connection);
+}
 
 our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) returns Array is export {
 	my $sql = q:to/END/;
@@ -161,6 +169,15 @@ our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) retu
 
 	return $connection.query($sql, $project_ids.join(", ")).hashes.Array;
 }
+
+our sub find-tags-by-id(Array $tag_ids, DB::Connection $connection) returns Array is export {
+	my $sql = q:to/END/;
+		SELECT id, name from tags where id in (?);
+	END
+
+	return $connection.query($sql, $tag_ids.join(", ")).hashes.Array;
+}
+
 
 
 

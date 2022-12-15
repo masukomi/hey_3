@@ -98,6 +98,7 @@ multi sub MAIN("log") {
 	my @timers = timers-since(0, $connection);
 	for @timers -> %timer {
 		%timer<projects> = timer-projects(%timer, $connection);
+		%timer<tags> = timer-tags(%timer, $connection);
 	}
 	display-timers-as-table(@timers, "All Timers");
 }
