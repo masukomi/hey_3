@@ -79,7 +79,7 @@ our sub stop-event(Int $stopped_at,
 	return False unless $maybe_last_event ~~ Some;
 
 	my $last_event_id = $maybe_last_event.value<id>;
-	stop-specific-event($last_event_id, $connection);
+	stop-specific-event($last_event_id, $stopped_at, $connection);
 }
 
 #TODO: the 3 project methods are copy-pasta of the similar tag methods.

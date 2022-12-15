@@ -75,7 +75,14 @@ multi sub MAIN("stop",
 	my $connection = $db.db;
 	my $time = DateTime.now();
 	my $id_match =  @args[0].match(/^ (\d+) $/);
-	my $id = $id_match ?? $id_match[0].Int !! -1;
+	my $simple_relative_time_match = @args.join(" ")
+									  .match(/^ \d+ \s+ \w+ \s+ "ago"/);
+	# IF we have a realtive time match
+	# then the id match is bogus.
+	my $id = ($id_match and (! $simple_relative_time_match))
+			  ?? $id_match[0].Int
+			  !! -1;
+
 	my %compiled_args = compile-timer-args(
 		$id == -1 ?? @args !! @args.splice(1)
 	);
@@ -83,7 +90,6 @@ multi sub MAIN("stop",
 	if %compiled_args<time_stuff>.elems > 0 {
 		$time = adjust-date-time($time, %compiled_args<time_stuff>)
 	}
-
     my $stopped = ($id == -1)
 					?? stop-event($time.posix(), $connection)
 					!! stop-specific-event($id, $time.posix(), $connection);
@@ -94,11 +100,27 @@ multi sub MAIN("stop",
 }
 
 #| see a log of recent timers
-multi sub MAIN("log") {
+multi sub MAIN("log",
+			   Int $number,
+			   Str $duration
+			  ) {
+
+	if ! time_units.includes($duration) {
+		die("You must specify a valid duration");
+	}
+	if $number <= 1 {
+		die("You must specify at least 1 unit of duration. E.g. 1 week");
+	}
+
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
 	#TODO limit & group by day, or week or whatever
-	my @timers = timers-since(0, $connection);
+	my $since = DateTime.now();
+	$since = $since.earlier([
+								   Pair.new($duration, $number)
+							   ]);
+
+	my @timers = timers-since($since.posix(), $connection);
 	for @timers -> %timer {
 		%timer<projects> = timer-projects(%timer, $connection);
 		%timer<tags> = timer-tags(%timer, $connection);
