@@ -25,7 +25,7 @@ constant time_regexp = /^ (\d ** 1..2) [ ":" (\d ** 2) ]?/;
 # hey start 4 minutes ago @my_proj +tag1 +tag2
 # hey start 2 hours ago @my_proj +tag1
 
-# TODO support
+#| Start a new timer
 multi sub MAIN('start',
 		 *@args #= time adjustment, project, & tags
 		) {
@@ -66,6 +66,7 @@ multi sub MAIN('start',
 # hey stop 4 minutes ago
 # hey stop 2 hours ago
 
+#| stop an existing timer
 multi sub MAIN("stop",
 		*@args #= optional time adjustments (e.g. 4 minutes ago)
 		) {
@@ -91,6 +92,8 @@ multi sub MAIN("stop",
 			 !! say("No timer was running");
 
 }
+
+#| see a log of recent timers
 multi sub MAIN("log") {
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
@@ -102,6 +105,8 @@ multi sub MAIN("log") {
 	}
 	display-timers-as-table(@timers, "All Timers");
 }
+
+#| lets you know if there are any timers running & what they are for
 multi sub MAIN("running") {
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
@@ -110,7 +115,7 @@ multi sub MAIN("running") {
 		my $timers_value = $timers.value;
 		for $timers_value.Array -> $timer_hash {
 			my $projects = timer-projects($timer_hash, $connection);
-			my @project_names = $projects.map({$_<name>});
+			my @project_names = $projects.map({$_<name>}).sort;
 			@project_names.push("[No Associated Projects]") if @project_names.is-empty;
 			say("Timer started at "
 			~ datestring(DateTime.new($timer_hash.<started_at>))
