@@ -140,10 +140,10 @@ multi sub MAIN("log",
 		# because when someone says 1 day ago
 		# they don't mean 24hrs from this moment.
 		# they mean, all of yesterday.
-		$since = $since.earlier(
-			hours => $since.hours,
-			minutes => $since.minutes,
-			seconds => $since.seconds
+		$since = $since.earlier([
+			hours => $since.hour,
+			minutes => $since.minute,
+			seconds => $since.second]
 		)
 	}
 	$since = $since.earlier([
@@ -267,5 +267,5 @@ sub guarantee-db() returns Str {
 }
 
 sub datestring(DateTime $dt) returns Str {
-	strftime("%a, %H:%M", $dt);
+	strftime("%a, %H:%M", $dt.local);
 }
