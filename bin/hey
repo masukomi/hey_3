@@ -105,10 +105,12 @@ multi sub MAIN("log",
 			   Str $duration
 			  ) {
 
+	note("\nXXX \$number: " ~ $number.raku);
+	note("\nXXX \$duration: " ~ $duration.raku);
 	if ! time_units.includes($duration) {
 		die("You must specify a valid duration");
 	}
-	if $number <= 1 {
+	if $number < 1 {
 		die("You must specify at least 1 unit of duration. E.g. 1 week");
 	}
 
