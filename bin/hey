@@ -92,7 +92,7 @@ multi sub MAIN("stop",
 
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
-	my $time = DateTime.now();
+	my $time = DateTime.now().local;
 	my $id_match =  @args[0].match(/^ (\d+) $/);
 	my $simple_relative_time_match = @args.join(" ")
 									  .match(/^ \d+ \s+ \w+ \s+ "ago"/);
@@ -134,7 +134,7 @@ multi sub MAIN("log",
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
 	#TODO limit & group by day, or week or whatever
-	my $since = DateTime.now();
+	my $since = DateTime.now().local;
 	if (! ["minute", "minutes", "second", "seconds", "hour", "hours"].includes( $duration) ) {
 		# drop it back to midnight
 		# because when someone says 1 day ago
@@ -213,17 +213,42 @@ sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
 		my $minutes = $match_data.elems > 1
 					   ?? $match_data[1].Int
 					   !! 0;
+
 		# swap to 24 hour time
-		$hour += 12 if $hour < 12;
-		my $now = DateTime.now();
-		my $then = my $dt = DateTime.new(
-			year    => $now.year,
-			month   => $now.month,
-			day     => $now.day,
-			hour    => $hour,
-			minute  => $minutes,
+		my $now = DateTime.now().local;
+		my $yesterday = False;
+
+		# PLEASE REFACTOR THIS INTO SOMETHING MORE SANE
+		if $now.hour < 12 and $hour < $now.hour {
+			$yesterday = True;
+			$hour += 12;
+		} elsif $now.hour < 12 and $hour > 12 {
+			$yesterday = True;
+		} elsif $now.hour > 12 and $hour < 12 {
+			if ($hour < ($now.hour - 12)) {
+				# it's between 12PM and now
+				$hour += 12;
+			}
+			# otherwise
+			# it's got to be morning
+			# hour stays untouched
+		}
+
+
+		# midnight this morning, in this time zone
+		# there's got to be a better way
+		my $then = DateTime.new(
+			year => $now.year,
+			month => $now.month,
+			day => $now.day,
+			hour => $hour,
+			minute => $minutes,
+			second => 0,
+			timezone => $now.timezone
 		);
-		if $hour < $now.hour {
+
+
+		if $yesterday {
 			# i see you left one running from yesterday
 			$then = $then.subtract( days => 1 );
 		}
