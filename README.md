@@ -1,16 +1,13 @@
-NAME
-====
+# NAME
 
 Hey - a simple command line time tracker, written in Raku and backed by SQLite.
 
-DESCRIPTION
-===========
+# DESCRIPTION
 
 Hey is a command line tool that tracks your time spent on various projects that may have happened along the way. 
 
 
-USAGE
-=====
+# USAGE
 
 # Timers
 
@@ -31,6 +28,7 @@ hey start @project +tag1 +tag2
 hey stop
 
 ```
+
 ## Backdating Timers
 
 The start and stop of a timer can be backdated using relative or absolute times. 
@@ -104,8 +102,8 @@ Note: if you choose a duration of days or longer, it will do the number specifie
 So, for example, `hey log 1 day` doesn't get you the past 24 hours worth of logs. It gets you everything from midnight yesterday. If you really want 24 hours, just say `hey log 24 hours`.
 
 
-INSTALLATION
-============
+# INSTALLATION
+
 Hey is written in [Raku](https://raku.org), and uses the
 [zef](https://github.com/ugexe/zef) package manager for installation.
 
@@ -129,18 +127,6 @@ brew install rakudo-star
 Now, go back and run the `zef install Hey` command from above.
 
 
-CONTRIBUTING
-============
-
-Pull Requests are _very_ welcomed. 
-
-Please note. This code was written in a rush. There's a lot of refactoring and cleanup to do.
-
-I'm using this daily now so there will be modifications and improvements over time. I'm especially interested in adding useful reporting and data extraction functionality. 
-
-Let's chat [on Mastodon](https://connectified.com/@masukomi) if you've got some ideas. Alternately, just file a 
-
-
 ## Coming soon
 ### Reports
 ### Interruption Tracking
@@ -155,10 +141,20 @@ I'll be using [bash_unit](https://github.com/pgrange/bash_unit) because testing 
 
 Why aren't they there now? Because I just needed something quick and dirty and the Magic of Raku made this way more useful than I expected with very little code.
 
+# CONTRIBUTING
+
+Pull Requests are _very_ welcomed. 
+
+Please note. This code was written in a rush. There's a lot of refactoring and cleanup to do.
+
+I'm using this daily now so there will be modifications and improvements over time. I'm especially interested in adding useful reporting and data extraction functionality. 
+
+Let's chat [on Mastodon](https://connectified.com/@masukomi) if you've got some ideas. Alternately, just file a 
+
+Note: this app's version numbers follow strict [Semantic Versioning](https://semver.org). 
 
 
-AUTHOR
-======
+# AUTHOR
 
 masukomi (A.K.A. Kay Rhodes)
 
@@ -168,5 +164,5 @@ masukomi (A.K.A. Kay Rhodes)
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2022 Kay Rhodes & distributed under the GNU Affero General Public License version 3.0 or later 
+Copyright 2022 Kay Rhodes & distributed under the GNU Affero General Public License version 3.0 or later.
 
