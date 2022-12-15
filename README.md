@@ -1,16 +1,12 @@
 NAME
 ====
 
-Hey - A time and interruption tracker.
-
-
-
-
+Hey - a simple command line time tracker, written in Raku and backed by SQLite.
 
 DESCRIPTION
 ===========
 
-Hey is a command line tool that tracks your time spent on various projects and any interruptions that may have happened along the way. 
+Hey is a command line tool that tracks your time spent on various projects that may have happened along the way. 
 
 
 USAGE
@@ -92,22 +88,85 @@ To stop a specific timer you just give it the integer id shown in the log.
 
 `hey stop 12`
 
+## Viewing the Log
+
+`hey log <number> <duration>`
+
+This uses the same duration words as in backdating. 
+
+``` text
+hey log 4 days
+hey log 24 hours
+```
+
+Note: if you choose a duration of days or longer, it will do the number specified since midnight at the start of today. 
+
+So, for example, `hey log 1 day` doesn't get you the past 24 hours worth of logs. It gets you everything from midnight yesterday. If you really want 24 hours, just say `hey log 24 hours`.
 
 
+INSTALLATION
+============
+Hey is written in [Raku](https://raku.org), and uses the
+[zef](https://github.com/ugexe/zef) package manager for installation.
 
-SYNOPSIS
-========
+If you've already got Raku and `zef` installed then just run:
+
+`zef install Hey`
+
+If you don't have Raku installed then...
+
+## Raku install quick-guide
+
+My recommendation is to use [Homebrew](https://brew.sh/) to install
+[Rakudo](https://rakudo.org/) Regardless of if you use Homebrew, or
+download from the main site, you'll want the [Rakudo-Star](https://rakudo.org/star) package. This brings along a handful of other
+useful things, like our package manager: [zef](https://github.com/ugexe/zef).
+
+```
+brew install rakudo-star
+```
+
+Now, go back and run the `zef install Hey` command from above.
+
+
+CONTRIBUTING
+============
+
+Pull Requests are _very_ welcomed. 
+
+Please note. This code was written in a rush. There's a lot of refactoring and cleanup to do.
+
+I'm using this daily now so there will be modifications and improvements over time. I'm especially interested in adding useful reporting and data extraction functionality. 
+
+Let's chat [on Mastodon](https://connectified.com/@masukomi) if you've got some ideas. Alternately, just file a 
+
+
+## Coming soon
+### Reports
+### Interruption Tracking
+The 1st two iterations of Hey (Chicken Scheme, and Crystal) were Interruption trackers. I was in an extremely "interruption driven" environment and I was trying to get my head around where my interruptions were coming from so that I could take steps to address them. 
+
+These days, I've got far fewer interruptions, BUT it's still a very useful thing, so the old Interruption Tracking functionality will be returning, but with better reports.
+
+### Tests! 
+oooh. ahhh. 
+
+I'll be using [bash_unit](https://github.com/pgrange/bash_unit) because testing an app where 90% of the behaviors are based upon side-effects of data that may, or may not, have been persisted in the DB is way easier at the system level. See [TooLoo](https://tooloo.dev) for an example of what these tests will look like.
+
+Why aren't they there now? Because I just needed something quick and dirty and the Magic of Raku made this way more useful than I expected with very little code.
+
 
 
 AUTHOR
 ======
 
-    <>
+masukomi (A.K.A. Kay Rhodes)
+
+- Web: [masukomi.org](https://masukomi.org)
+- Mastodon: [@masukomi@connectified.com](https://connectified.com/@masukomi)
 
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2022 
-
-This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
+Copyright 2022 Kay Rhodes & distributed under the GNU Affero General Public License version 3.0 or later 
 
