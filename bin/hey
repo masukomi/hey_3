@@ -135,7 +135,7 @@ multi sub MAIN("log",
 	my $connection = $db.db;
 	#TODO limit & group by day, or week or whatever
 	my $since = DateTime.now();
-	if (! ["minute", "minutes", "second", "seconds", "hour", "hours"].include $duration ) {
+	if (! ["minute", "minutes", "second", "seconds", "hour", "hours"].includes( $duration) ) {
 		# drop it back to midnight
 		# because when someone says 1 day ago
 		# they don't mean 24hrs from this moment.
