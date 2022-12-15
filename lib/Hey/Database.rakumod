@@ -32,7 +32,7 @@ our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connectio
 		SELECT * from events
 		WHERE type = ?
 	          AND started_at >= ?
-		order by id DESC LIMIT 1;
+		order by id DESC;
 	END
 
 	$connection.query($sql, $type, $epoch_since).hashes.Array;
@@ -62,21 +62,24 @@ our sub create-event(DB::Connection $connection,
 	return find-last-event($event_type, $connection).value; # there damn well better be one
 }
 
+our sub stop-specific-event(Int $id, Int $stopped_at, DB::Connection $connection) is export {
+	my $update_sql = qq:to/END/;
+	UPDATE events set ended_at = $stopped_at
+	WHERE id = $id
+	END
+	my $statement_handle = $connection.prepare($update_sql);
+	$statement_handle.execute(); # or go boom
+	return True;
+}
 
-our sub stop-event(DB::Connection $connection,
-				   Int $stopped_at
+our sub stop-event(Int $stopped_at,
+				   DB::Connection $connection,
 				  ) returns Bool is export {
 	my $maybe_last_event = find-last-event("timer", $connection);
 	return False unless $maybe_last_event ~~ Some;
 
 	my $last_event_id = $maybe_last_event.value<id>;
-	my $update_sql = qq:to/END/;
-	UPDATE events set ended_at = $stopped_at
-	WHERE id = $last_event_id
-	END
-	my $statement_handle = $connection.prepare($update_sql);
-	$statement_handle.execute(); # or go boom
-	return True;
+	stop-specific-event($last_event_id, $connection);
 }
 
 #TODO: the 3 project methods are copy-pasta of the similar tag methods.

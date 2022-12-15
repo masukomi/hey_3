@@ -26,7 +26,7 @@ our sub display-timers-as-table(@timer_hashes, $title) is export {
 	my @sorted_timers = @timer_hashes.sort({$^a<started_at> cmp $^b<started_at>});
 	my $table = Prettier::Table.new(
 		title => $title,
-		field-names => ['Started', 'Total', 'Projects'],
+		field-names => ['ID', 'Started', 'Total', 'Projects'],
 		align => %('Started' => 'l', 'Total' => 'r', 'Projects' => 'l')
 	);
 	my $total_seconds = 0;
@@ -35,6 +35,7 @@ our sub display-timers-as-table(@timer_hashes, $title) is export {
 		my $dt = DateTime.new(%timer_hash<started_at>);
 		my @project_names = %timer_hash<projects>.map({$_<name>});
 		$table.add-row([
+							  %timer_hash<id>,
 							  strftime("%m/%d %H:%M", $dt),
 							  total-string(%timer_hash<started_at>,
 										  %timer_hash<ended_at>),
@@ -48,7 +49,7 @@ our sub display-timers-as-table(@timer_hashes, $title) is export {
 		}
 	}
 
-	$table.add-row(["Summary",
+	$table.add-row(["", "Summary",
 					duration($total_seconds),
 				    @all_projects.flatten.sort.unique]);
 	say $table;

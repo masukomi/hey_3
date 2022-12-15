@@ -73,15 +73,22 @@ multi sub MAIN("stop",
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now();
-	my %compiled_args = compile-timer-args(@args);
+	my $id_match =  @args[0].match(/^ (\d+) $/);
+	my $id = $id_match ?? $id_match[0].Int !! -1;
+	my %compiled_args = compile-timer-args(
+		$id == -1 ?? @args !! @args.splice(1)
+	);
 
 	if %compiled_args<time_stuff>.elems > 0 {
 		$time = adjust-date-time($time, %compiled_args<time_stuff>)
 	}
 
-	stop-event($connection, $time.posix())
-	?? say("Stopped at " ~ datestring($time))
-	!! say("No timer was running");
+    my $stopped = ($id == -1)
+					?? stop-event($time.posix(), $connection)
+					!! stop-specific-event($id, $time.posix(), $connection);
+
+	$stopped ?? say("Stopped at " ~ datestring($time))
+			 !! say("No timer was running");
 
 }
 multi sub MAIN("log") {
