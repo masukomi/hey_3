@@ -319,8 +319,7 @@ sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
 			$yesterday = True;
 			$hour += 12;
 		} elsif (! $pre_noon) and $hour < 12 {
-			note("\nXXX: final elsif");
-			if ($hour < ($now.hour - 12)) {
+			if ($hour <= ($now.hour - 12)) {
 				# it's between 12PM and now
 				$hour += 12;
 			}
