@@ -1,5 +1,22 @@
 Revision history for Hey
 
+## [1.0.0-beta.4] - 2022-12-16
+ADDED
+- now you can kill a specific timer
+
+FIXED
+- corrected edge case with adjusting time post noon.
+- corrected bug in a couple places where only the first row of a query was being returned
+
+CHANGED
+- Removed summary from all tables
+  It wasn't wrapping and looked terrible.
+  Will reinstate once i get the wrapping working again.
+- Improved output
+  - Now specifes id of newly created timer
+  - Now sorts people, projects, & tags in table views
+- Exit code for user error is now 64
+
 ## [1.0.0-beta.3] - 2022-12-16
 - Corrected determination of a backdate being 'yesterday'
 - Corrected a bad function call in adjusting time for yesterday
