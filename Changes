@@ -1,4 +1,11 @@
 Revision history for Hey
 
+## [1.0.0-beta.3] - 2022-12-16
+- Corrected determination of a backdate being 'yesterday'
+- Corrected a bad function call in adjusting time for yesterday
+
+## [1.0.0-beta.2] - 2022-12-15
+- Corrected bad META6.json file
+
 ## [1.0.0-beta.1] - 2022-12-15
 - Initial Release. Fingers crossed.
