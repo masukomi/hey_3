@@ -260,7 +260,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			%timer<people> = [];
 			%timer<tags> = timer-tags(%timer, $connection);
 		}
-		display-timers-as-table(@timers, "All Timers");
+		display-timers-as-table(@timers, "All Timers", False);
 	} else {
 		my @interruptions = interruptions-since($since.posix(), $connection);
 		for @interruptions -> %interruption {
