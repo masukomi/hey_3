@@ -47,6 +47,19 @@ our sub find-ongoing-events(Str $event_type, DB::Connection $connection) returns
 		default {nothing(Array);}
 	}
 }
+our sub find-event-by-id(Int $id, Str $type, DB::Connection $connection) returns Maybe[Hash] is export {
+	my $sql = qq:to/END/;
+	SELECT * FROM events
+	WHERE id = $id
+	AND type = ?
+	END
+	given $connection.query($sql, $type).hash {
+		when .elems > 0 {something($_)}
+		default {nothing(Hash)}
+	}
+
+}
+
 our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connection) returns Array is export {
 	my $sql = q:to/END/;
 		SELECT * from events
@@ -370,4 +383,27 @@ our sub kill-person(Int $person_id, DB::Connection $connection) is export {
 	WHERE id in (?)
 	END
 	$count = $connection.query($sql, @people_event_ids.join(', '));
+}
+our sub kill-event(Int $event_id, DB::Connection $connection) is export {
+	# find events only associated with that person
+	# at the moment events are ONLY associated with one person, so we can cheat
+
+	my $sql = qq:to/END/;
+	DELETE FROM events_people
+	WHERE event_id = $event_id
+	END
+	my $count = $connection.query($sql);
+
+	$sql = qq:to/END/;
+	DELETE FROM events_tags
+	WHERE event_id = $event_id
+	END
+	$count = $connection.query($sql);
+	# just going to leave spurious tags
+
+	$sql = qq:to/END/;
+	DELETE FROM events
+	WHERE id = $event_id
+	END
+	$count = $connection.query($sql);
 }

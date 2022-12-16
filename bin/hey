@@ -204,6 +204,22 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 	say("Recorded interruption by $name");
 }
 
+#| Remove an unwanted timer.
+multi sub MAIN("kill",
+			   "timer",
+			   Int $id #= the id of the timer to delete.
+			  ) {
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $event_hash = find-event-by-id($id, "timer", $connection);
+	if $event_hash ~~ Some {
+		kill-event($id, $connection);
+		say("It's dead Jim.");
+	} else {
+		note("You missed your shot! There's no timer with an id of $id.");
+		exit 64;
+	}
+}
 #| Remove an unwanted person / thing from interruptions
 multi sub MAIN("kill",
 			   Str $name #= the name of the person/thing you wish to.... remove the records of
