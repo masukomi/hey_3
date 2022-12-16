@@ -112,6 +112,9 @@ To stop a specific timer you just give it the integer id shown in the log.
 
 `hey log <number> <duration>`
 
+![example log output](../readme_images/images/all_timers.png)
+
+
 This uses the same duration words as in backdating. 
 
 ``` text
@@ -140,6 +143,7 @@ This works the same as viewing your timer logs, but you say "log-interrupts" ins
 
 `hey log-interrupts <number> <duration>`
 
+![example log output](../readme_images/images/all_interruptions.png)
 
 # INSTALLATION
 
