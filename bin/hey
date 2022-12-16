@@ -128,12 +128,22 @@ multi sub MAIN("stop",
 
 #| see a log of recent timers
 multi sub MAIN("log",
-			   Int $number,
-			   Str $duration
+			   Int $number, #= number of duration units
+			   Str $duration #= duration string. E.g. minutes, hours, days, etc.
 			  ) {
 
 	generate-log("timers", $number, $duration);
 }
+
+#| see a log of recent interruptions
+multi sub MAIN("log-interrupts",
+			   Int $number, #= number of duration units
+			   Str $duration  #= duration string. E.g. minutes, hours, days, etc.
+			  ) {
+
+	generate-log("interruptions", $number, $duration);
+}
+
 
 #| lets you know if there are any timers running & what they are for
 multi sub MAIN("running") {
@@ -182,14 +192,6 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 }
 
 
-#| see a log of recent interruptions
-multi sub MAIN("interruptions",
-			   Int $number,
-			   Str $duration
-			  ) {
-
-	generate-log("interruptions", $number, $duration);
-}
 
 
 
