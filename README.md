@@ -9,6 +9,27 @@ Hey is a command line tool that tracks your time spent on various projects that 
 
 # USAGE
 
+**Quickie Version**
+
+``` text
+Usage:
+  hey start [<start_args> ...] -- Start a new timer
+  hey stop [<stop_args> ...] -- stop an existing timer
+  hey log <number> <duration> -- see a log of recent timers
+  hey log-interrupts <number> <duration> -- see a log of recent interruptions
+  hey running -- lets you know if there are any timers running & what they are for
+  hey <name> [<start_args> ...] -- Record an interruption
+
+    [<start_args> ...]    optional time adjustment, project(s), & optional tags
+    [<stop_args> ...]     optional id, and optional time adjustments (e.g. 4 minutes ago)
+    <number>              number of duration units
+    <duration>            duration string. E.g. minutes, hours, days, etc.
+    <name>                name of person / thing that interrupted you
+```
+
+Details...
+
+
 # Timers
 
 Starting and stopping timers is pretty straightforward. At a bare minimum you just tell it to start and give it a project name: `hey start @my_project` and stop it when you're done with `hey stop`
@@ -101,6 +122,23 @@ Note: if you choose a duration of days or longer, it will do the number specifie
 
 So, for example, `hey log 1 day` doesn't get you the past 24 hours worth of logs. It gets you everything from midnight yesterday. If you really want 24 hours, just say `hey log 24 hours`.
 
+# Interruptions
+
+Recording an interruption is the same as recording a timer, except that you start with the name of the person / thing that interrupted you, and project is completely optional.
+
+``` text
+hey bob
+hey bob at 9:15
+hey bob at 10:30 +gossip
+hey bob at 11:15 @project_x +questions
+hey bob 20 minutes ago 
+hey bob 10 minutes ago @project_x +questions
+```
+## Viewing the Log
+This works the same as viewing your timer logs, but you say "log-interrupts" instead of "log"
+
+`hey log-interrupts <number> <duration>`
+
 
 # INSTALLATION
 
@@ -129,10 +167,9 @@ Now, go back and run the `zef install Hey` command from above.
 
 ## Coming soon
 ### Reports
-### Interruption Tracking
-The 1st two iterations of Hey (Chicken Scheme, and Crystal) were Interruption trackers. I was in an extremely "interruption driven" environment and I was trying to get my head around where my interruptions were coming from so that I could take steps to address them. 
-
-These days, I've got far fewer interruptions, BUT it's still a very useful thing, so the old Interruption Tracking functionality will be returning, but with better reports.
+* Graph Interruptions over time, to find parts of the day where you're most likely to be able to focus, or need to hide.
+* Graph Interruptions by people to find out who you need to talk to.
+* Graph Interruptions by tag or projects to find out where you would best benefit from adding documentation.
 
 ### Tests! 
 oooh. ahhh. 
