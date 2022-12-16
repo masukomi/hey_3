@@ -19,6 +19,7 @@ Usage:
   hey log-interrupts <number> <duration> -- see a log of recent interruptions
   hey running -- lets you know if there are any timers running & what they are for
   hey <name> [<start_args> ...] -- Record an interruption
+  hey kill timer <id> -- Remove an unwanted timer.
   hey kill <name> -- Remove an unwanted person / thing from interruptions
 
     [<start_args> ...]    optional time adjustment, project(s), & optional tags
@@ -26,6 +27,7 @@ Usage:
     <number>              number of duration units
     <duration>            duration string. E.g. minutes, hours, days, etc.
     <name>                name of person / thing that interrupted you
+    <id>                  the id of the timer to delete.
 ```
 
 And now for some useful details to fill in the gaps...
@@ -107,6 +109,21 @@ Hey supports multiple simultaneous timers. There's nothing fancy to it. The only
 To stop a specific timer you just give it the integer id shown in the log.
 
 `hey stop 12`
+
+### Killing A Specific Timer
+Sometimes, things don't go as planned. For example, I started a timer
+to go walk the dogs, left my computer, and unexpectedly ended up
+eating lunch. That timer was no good. 
+
+To kill an unwanted timer say `hey kill timer <id>`
+
+```text
+hey kill timer 4
+```
+
+A timer's id is shown when you create a new timer, or when you view
+the log.
+
 
 ## Viewing the Log
 
