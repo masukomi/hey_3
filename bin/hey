@@ -19,6 +19,13 @@
 
 
 
+# Dear Developer who is not me.
+# Thanks for your curiousity about this code.
+# Please know that it was written in a mad rush,
+# and as such, it could use a lot of refactoring.
+# Any improvements you can offer will be welcomed.
+# - masukomi
+
 use v6;
 use lib 'lib';
 use DB::SQLite;
@@ -46,12 +53,12 @@ constant time_regexp = /^ (\d ** 1..2) [ ":" (\d ** 2) ]?/;
 
 #| Start a new timer
 multi sub MAIN('start',
-		 *@args #= time adjustment, project, & tags
+		 *@start_args #= optional time adjustment, project(s), & optional tags
 		) {
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now();
-	my %compiled_args = compile-timer-args(@args);
+	my %compiled_args = compile-timer-args(@start_args);
 
 	if %compiled_args<projects>.elems == 0 {
 		die("must specify at least one project to start a timer.");
@@ -87,14 +94,14 @@ multi sub MAIN('start',
 
 #| stop an existing timer
 multi sub MAIN("stop",
-		*@args #= optional time adjustments (e.g. 4 minutes ago)
+		*@stop_args #= optional id, and optional time adjustments (e.g. 4 minutes ago)
 		) {
 
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now().local;
-	my $id_match =  @args[0].match(/^ (\d+) $/);
-	my $simple_relative_time_match = @args.join(" ")
+	my $id_match =  @stop_args[0].match(/^ (\d+) $/);
+	my $simple_relative_time_match = @stop_args.join(" ")
 									  .match(/^ \d+ \s+ \w+ \s+ "ago"/);
 	# IF we have a realtive time match
 	# then the id match is bogus.
@@ -103,7 +110,7 @@ multi sub MAIN("stop",
 			  !! -1;
 
 	my %compiled_args = compile-timer-args(
-		$id == -1 ?? @args !! @args.splice(1)
+		$id == -1 ?? @stop_args !! @stop_args.splice(1)
 	);
 
 	if %compiled_args<time_stuff>.elems > 0 {
@@ -166,14 +173,10 @@ multi sub MAIN("running") {
 	if $timers ~~ Some {
 		my $timers_value = $timers.value;
 		for $timers_value.Array -> $timer_hash {
-			my $projects = timer-projects($timer_hash, $connection);
-			my @project_names = $projects.map({$_<name>}).sort;
-			@project_names.push("[No Associated Projects]") if @project_names.is-empty;
-			say("Timer started at "
-			~ datestring(DateTime.new($timer_hash.<started_at>))
-			~ " for "
-			~ @project_names.sort.join(", "))
+			$timer_hash<projects> = timer-projects($timer_hash, $connection);
+			$timer_hash<tags> = timer-tags($timer_hash, $connection);
 		}
+		display-timers-as-table($timers_value, "Running Timers", False);
 	} else {
 		say("No timer running.");
 	}
@@ -219,6 +222,7 @@ sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
 		my $yesterday = False;
 
 		# PLEASE REFACTOR THIS INTO SOMETHING MORE SANE
+		# This just feels ugly.
 		if $now.hour < 12 and $hour < $now.hour {
 			$yesterday = True;
 			$hour += 12;
@@ -263,7 +267,6 @@ sub extract-time-adjustment-args(@args) returns Array {
 		return @args[0..1].Array;
 	}
 	return [];
-
 }
 sub compile-timer-args(@args) returns Hash {
 	my @inner_args = @args;

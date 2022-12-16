@@ -27,7 +27,7 @@ our sub timer-tags(Hash $timer_hash, DB::Connection $connection) returns Array i
 
 
 # assumes each hash has a <projects> key with an array of project hashes
-our sub display-timers-as-table(@timer_hashes, $title) is export {
+our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = True) is export {
 	my @sorted_timers = @timer_hashes.sort({$^a<started_at> cmp $^b<started_at>});
 	my $table = Prettier::Table.new(
 		title => $title,
@@ -61,11 +61,14 @@ our sub display-timers-as-table(@timer_hashes, $title) is export {
 		}
 	}
 
-	$table.add-row(["", "Summary",
-					duration($total_seconds),
-				    @all_projects.flatten.sort.unique,
-					@all_tags.flatten.sort.unique
-				   ]);
+	if $include_summary {
+		$table.add-row(["", "Summary",
+						duration($total_seconds),
+						@all_projects.flatten.sort.unique,
+						@all_tags.flatten.sort.unique
+					]);
+
+	}
 	say $table;
 }
 
