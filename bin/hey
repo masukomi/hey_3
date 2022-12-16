@@ -80,7 +80,7 @@ multi sub MAIN('start',
 	for %compiled_args<tags>.Array -> $tag { # may be empty list
 		tag-event($tag, $event_hash<id>, $connection);
 	}
-	say("Started Timer for "
+	say("Started Timer ($event_hash<id>) for "
 		~ %compiled_args<projects>.join(", ")
 		~ " at "
 		~ datestring($time)
@@ -176,7 +176,7 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 		# we can, like log, and log-interrupts
 		note("I don't think that's quite right. Here are some docs...\n");
 		note($*USAGE);
-		exit 67;
+		exit 64;
 	}
 
 	my $db = DB::SQLite.new(filename => guarantee-db());
