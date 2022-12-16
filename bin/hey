@@ -102,9 +102,12 @@ multi sub MAIN("stop",
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now().local;
-	my $id_match =  @stop_args[0].match(/^ (\d+) $/);
-	my $simple_relative_time_match = @stop_args.join(" ")
-									  .match(/^ \d+ \s+ \w+ \s+ "ago"/);
+	my $id_match =  @stop_args
+					 ?? @stop_args[0].match(/^ (\d+) $/)
+					 !! Nil;
+	my $simple_relative_time_match = @stop_args
+									  ?? @stop_args.join(" ") .match(/^ \d+ \s+ \w+ \s+ "ago"/)
+									  !! Nil;
 	# IF we have a realtive time match
 	# then the id match is bogus.
 	my $id = ($id_match and (! $simple_relative_time_match))
@@ -257,7 +260,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			%timer<people> = [];
 			%timer<tags> = timer-tags(%timer, $connection);
 		}
-		display-timers-as-table(@timers, "All Interruptions");
+		display-timers-as-table(@timers, "All Timers");
 	} else {
 		my @interruptions = interruptions-since($since.posix(), $connection);
 		for @interruptions -> %interruption {

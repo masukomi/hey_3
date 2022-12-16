@@ -19,6 +19,7 @@ Usage:
   hey log-interrupts <number> <duration> -- see a log of recent interruptions
   hey running -- lets you know if there are any timers running & what they are for
   hey <name> [<start_args> ...] -- Record an interruption
+  hey kill <name> -- Remove an unwanted person / thing from interruptions
 
     [<start_args> ...]    optional time adjustment, project(s), & optional tags
     [<stop_args> ...]     optional id, and optional time adjustments (e.g. 4 minutes ago)
@@ -27,7 +28,7 @@ Usage:
     <name>                name of person / thing that interrupted you
 ```
 
-Details...
+And now for some useful details to fill in the gaps...
 
 
 # Timers
