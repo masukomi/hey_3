@@ -182,7 +182,7 @@ our sub find-projects-for-event(Hash $event_hash, DB::Connection $connection) re
 	my $query_sql = qq:to/END/;
 	select project_id from events_projects where event_id = $event_hash<id>
 	END
-	my $project_ids = $connection.query($query_sql).array.Array;
+	my $project_ids = $connection.query($query_sql).arrays.Array;
 	return $project_ids if $project_ids.elems == 0;
 	return find-projects-by-id($project_ids, $connection);
 }
@@ -191,7 +191,7 @@ our sub find-people-for-event(Hash $event_hash, DB::Connection $connection) retu
 	my $query_sql = qq:to/END/;
 	select person_id from events_people where event_id = $event_hash<id>
 	END
-	my $person_ids = $connection.query($query_sql).array.Array;
+	my $person_ids = $connection.query($query_sql).arrays.Array;
 	return $person_ids if $person_ids.elems == 0;
 	return find-people-by-id($person_ids, $connection);
 }
@@ -200,17 +200,18 @@ our sub find-tags-for-event(Hash $event_hash, DB::Connection $connection) return
 	my $query_sql = qq:to/END/;
 	select tag_id from events_tags where event_id = $event_hash<id>
 	END
-	my $tag_ids = $connection.query($query_sql).array.Array;
+	my $tag_ids = $connection.query($query_sql).arrays.Array;
 	return $tag_ids if $tag_ids.elems == 0;
 	return find-tags-by-id($tag_ids, $connection);
 }
 
 our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) returns Array is export {
-	my $sql = q:to/END/;
-		SELECT id, name from projects where id in (?);
+	my $project_ids_string=$project_ids.join(', ');
+	my $sql = qq:to/END/;
+		SELECT id, name from projects where id in ($project_ids_string);
 	END
-
-	return $connection.query($sql, $project_ids.join(", ")).hashes.Array;
+	my $result = $connection.query($sql).hashes.Array;
+	return $result;
 }
 our sub find-people-by-id(Array $person_ids, DB::Connection $connection) returns Array is export {
 	my $sql = q:to/END/;

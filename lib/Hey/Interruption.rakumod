@@ -56,9 +56,9 @@ our sub display-interruptions-as-table(@interruption_hashes, $title, Bool $inclu
 		$table.add-row([
 							  %interruption_hash<id>,
 							  strftime("%m/%d %H:%M", $dt.local),
-							  @people_names.join(", "),
-							  @project_names.join(", "),
-							  @tag_names.join(", ")
+							  @people_names.sort.join(", "),
+							  @project_names.sort.join(", "),
+							  @tag_names.sort.join(", ")
 						  ]);
 
 		# totals gathering ...

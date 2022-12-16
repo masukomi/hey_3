@@ -69,7 +69,6 @@ multi sub MAIN('start',
 	if %compiled_args<time_stuff>.elems > 0 {
 		$time = adjust-date-time($time, %compiled_args<time_stuff>)
 	}
-
 	my $event_hash = create-event($connection, "timer", $time.posix());
 	# TODO figure out why i need .Array here
 	# it's $["\@foo"] without it and ["\@foo"] with it

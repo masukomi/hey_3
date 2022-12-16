@@ -49,8 +49,8 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 							  strftime("%m/%d %H:%M", $dt.local),
 							  total-string(%timer_hash<started_at>,
 										  %timer_hash<ended_at>),
-							  @project_names.join(", "),
-							  @tag_names.join(", ")
+							  @project_names.sort.join(", "),
+							  @tag_names.sort.join(", ")
 						  ]);
 
 		# totals gathering ...
