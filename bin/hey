@@ -45,6 +45,7 @@ constant time_regexp = /^ (\d ** 1..2) [ ":" (\d ** 2) ]?/;
 # ex                         04           :   30
 #                             4           :   30
 #                             4
+constant uninterruptable = <start stop log log-interrupts running kill>.Array;
 
 # hey start @my_proj +tag1 +tag2
 # hey start at 4 @my_proj +tag1 +tag2
@@ -166,6 +167,15 @@ multi sub MAIN("running") {
 multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 		 *@start_args #= optional time adjustment, & optional projects, & optional tags
 		) {
+
+	if uninterruptable.includes($name) {
+		# TODO - implement sensible defaults for the ones
+		# we can, like log, and log-interrupts
+		note("I don't think that's quite right. Here are some docs...\n");
+		note($*USAGE);
+		exit 67;
+	}
+
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now();
@@ -189,6 +199,17 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 		tag-event($tag, $event_hash<id>, $connection);
 	}
 	say("Recorded interruption by $name");
+}
+
+#| Remove an unwanted person / thing from interruptions
+multi sub MAIN("kill",
+			   Str $name #= the name of the person/thing you wish to.... remove the records of
+			  ){
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $person_hash = unwrap(find-person($name, $connection), "$name wasn't found. Maybe they know what you're planning!");
+	kill-person($person_hash<id>, $connection);
+	say("$name is dead. Long live $name.");
 }
 
 

@@ -341,3 +341,33 @@ our sub is-event-personed(Int $event_id, Int $person_id, DB::Connection $connect
 	my $count = $connection.query($query_sql).value;
 	return $count > 0;
 }
+
+our sub kill-person(Int $person_id, DB::Connection $connection) is export {
+	# find events only associated with that person
+	# at the moment events are ONLY associated with one person, so we can cheat
+	my $sql = qq:to/END/;
+	SELECT event_id from events_people
+	WHERE person_id = $person_id
+	END
+	my @people_event_ids = $connection.query($sql).arrays.Array;
+	return unless @people_event_ids.elems > 0;
+
+	$sql = qq:to/END/;
+	DELETE FROM events_people
+	WHERE person_id = $person_id
+	END
+	my $count = $connection.query($sql);
+
+	$sql = qq:to/END/;
+	DELETE FROM events_tags
+	WHERE event_id in (?)
+	END
+	$count = $connection.query($sql, @people_event_ids.join(', '));
+	# just going to leave spurious tags
+
+	$sql = qq:to/END/;
+	DELETE FROM events
+	WHERE id in (?)
+	END
+	$count = $connection.query($sql, @people_event_ids.join(', '));
+}
