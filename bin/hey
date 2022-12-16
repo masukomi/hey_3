@@ -302,7 +302,7 @@ sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
 		$dt.earlier([Pair.new(@time_stuff[1].lc, @time_stuff[0])])
 	} else {
 		my $match_data = @time_stuff[1].match(time_regexp);
-		my $hour = $match_data[0].Int;
+		my $hour = $match_data[0].Int; # 12hr time: 3 could be 03 or 15
 		my $minutes = $match_data.elems > 1
 					   ?? $match_data[1].Int
 					   !! 0;
@@ -313,12 +313,13 @@ sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
 
 		# PLEASE REFACTOR THIS INTO SOMETHING MORE SANE
 		# This just feels ugly.
-		if $now.hour < 12 and $hour < $now.hour {
+		my $pre_noon = $now.hour < 12;
+
+		if $pre_noon and $hour > $now.hour {
 			$yesterday = True;
 			$hour += 12;
-		} elsif $now.hour < 12 and $hour > 12 {
-			$yesterday = True;
-		} elsif $now.hour > 12 and $hour < 12 {
+		} elsif (! $pre_noon) and $hour < 12 {
+			note("\nXXX: final elsif");
 			if ($hour < ($now.hour - 12)) {
 				# it's between 12PM and now
 				$hour += 12;
@@ -341,10 +342,9 @@ sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
 			timezone => $now.timezone
 		);
 
-
 		if $yesterday {
 			# i see you left one running from yesterday
-			$then = $then.subtract( days => 1 );
+			$then = $then.earlier( days => 1 );
 		}
 		return $then
 	}
