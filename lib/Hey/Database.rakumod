@@ -173,6 +173,16 @@ our sub find-projects-for-event(Hash $event_hash, DB::Connection $connection) re
 	return $project_ids if $project_ids.elems == 0;
 	return find-projects-by-id($project_ids, $connection);
 }
+
+our sub find-people-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
+	my $query_sql = qq:to/END/;
+	select person_id from events_people where event_id = $event_hash<id>
+	END
+	my $person_ids = $connection.query($query_sql).array.Array;
+	return $person_ids if $person_ids.elems == 0;
+	return find-people-by-id($person_ids, $connection);
+}
+
 our sub find-tags-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
 	my $query_sql = qq:to/END/;
 	select tag_id from events_tags where event_id = $event_hash<id>
@@ -189,6 +199,14 @@ our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) retu
 
 	return $connection.query($sql, $project_ids.join(", ")).hashes.Array;
 }
+our sub find-people-by-id(Array $person_ids, DB::Connection $connection) returns Array is export {
+	my $sql = q:to/END/;
+		SELECT id, name from people where id in (?);
+	END
+
+	return $connection.query($sql, $person_ids.join(", ")).hashes.Array;
+}
+
 
 our sub find-tags-by-id(Array $tag_ids, DB::Connection $connection) returns Array is export {
 	my $sql = q:to/END/;
@@ -268,4 +286,58 @@ our sub find-tag(Str $tag,DB::Connection $connection) returns Maybe[Hash] is exp
 		when $_.elems > 0 {something($_)}
 		default {nothing(Hash)}
 	}
+}
+
+
+
+## People
+##
+# Takes in a person, returns the id of the newly created person
+our sub create-person(Str $person, DB::Connection $connection) returns Hash is export {
+	my $insert_sql = q:to/END/;
+	INSERT INTO people (name) VALUES (?)
+	END
+	my $statement_handle = $connection.prepare($insert_sql);
+	my $rows_changed = $statement_handle.execute([$person.subst(/^ "@"/, "")]);
+	my $found_person_hash = find-person($person, $connection);
+	return unwrap($found_person_hash, "Couldn't find the person I just created for $person");
+}
+
+our sub find-or-create-person(Str $person, DB::Connection $connection) returns Hash is export {
+	my $lowercased_name = $person.lc;
+	my $maybe_person = find-person($person, $connection);
+	return $maybe_person.value if $maybe_person ~~ Some;
+	return create-person($person, $connection);
+}
+
+our sub find-person(Str $person,DB::Connection $connection) returns Maybe[Hash] is export {
+	my $sql = q:to/END/;
+		SELECT id, name from people where name = ? LIMIT 1;
+	END
+
+	given $connection.query($sql, $person).hash {
+		when $_.elems > 0 {something($_)}
+		default {nothing(Hash)}
+	}
+}
+our sub bind-event-person(Int $event_id, Int $person_id, DB::Connection $connection) is export {
+
+	unless is-event-personed($event_id, $person_id, $connection) {
+		my $insert_sql = qq:to/END/;
+		INSERT INTO events_people (event_id, person_id)
+		VALUES ($event_id, $person_id);
+		END
+		$connection.prepare($insert_sql).execute();
+	}
+}
+
+our sub is-event-personed(Int $event_id, Int $person_id, DB::Connection $connection) returns Bool is export {
+	my $query_sql = qq:to/END/;
+	SELECT count(*) from events_people
+	WHERE
+	  event_id = $event_id
+	  AND person_id = $person_id
+	END
+	my $count = $connection.query($query_sql).value;
+	return $count > 0;
 }

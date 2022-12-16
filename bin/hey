@@ -34,6 +34,7 @@ use Listicles;
 use Hey::Database;
 use Hey::Resourcer;
 use Hey::Timer;
+use Hey::Interruption;
 use DateTime::Format;
 use Definitely;
 
@@ -74,9 +75,9 @@ multi sub MAIN('start',
     for %compiled_args<projects>.Array -> $project_name {
 		my $project_hash = find-or-create-project($project_name, $connection);
 		bind-event-project($event_hash<id>, $project_hash<id>, $connection);
-		for %compiled_args<tags>.Array -> $tag { # may be empty list
-			tag-event($tag, $event_hash<id>, $connection);
-		}
+	}
+	for %compiled_args<tags>.Array -> $tag { # may be empty list
+		tag-event($tag, $event_hash<id>, $connection);
 	}
 	say("Started Timer for "
 		~ %compiled_args<projects>.join(", ")
@@ -131,7 +132,75 @@ multi sub MAIN("log",
 			   Str $duration
 			  ) {
 
-	if ! time_units.includes($duration) {
+	generate-log("timers", $number, $duration);
+}
+
+#| lets you know if there are any timers running & what they are for
+multi sub MAIN("running") {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
+	my $connection = $db.db;
+	my $timers = current-timers($connection);
+	if $timers ~~ Some {
+		my $timers_value = $timers.value;
+		for $timers_value.Array -> $timer_hash {
+			$timer_hash<projects> = timer-projects($timer_hash, $connection);
+			$timer_hash<tags> = timer-tags($timer_hash, $connection);
+		}
+		display-timers-as-table($timers_value, "Running Timers", False);
+	} else {
+		say("No timer running.");
+	}
+}
+
+#| Record an interruption
+multi sub MAIN(Str $name, #= name of person / thing that interrupted you
+		 *@start_args #= optional time adjustment, & optional projects, & optional tags
+		) {
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $time = DateTime.now();
+	my %compiled_args = compile-timer-args(@start_args);
+
+	if %compiled_args<time_stuff>.elems > 0 {
+		$time = adjust-date-time($time, %compiled_args<time_stuff>)
+	}
+
+	my $event_hash = create-event($connection, "interruption", $time.posix());
+	# TODO figure out why i need .Array here
+	# it's $["\@foo"] without it and ["\@foo"] with it
+
+	my $person_hash = find-or-create-person($name, $connection);
+	bind-event-person($event_hash<id>, $person_hash<id>, $connection);
+    for %compiled_args<projects>.Array -> $project_name {
+		my $project_hash = find-or-create-project($project_name, $connection);
+		bind-event-project($event_hash<id>, $project_hash<id>, $connection);
+	}
+	for %compiled_args<tags>.Array -> $tag { # may be empty list
+		tag-event($tag, $event_hash<id>, $connection);
+	}
+	say("Recorded interruption by $name");
+}
+
+
+#| see a log of recent interruptions
+multi sub MAIN("interruptions",
+			   Int $number,
+			   Str $duration
+			  ) {
+
+	generate-log("interruptions", $number, $duration);
+}
+
+
+
+
+
+#-----
+# SUPPORT METHODS
+#
+
+sub generate-log(Str $type, Int $number, Str $duration){
+		if ! time_units.includes($duration) {
 		die("You must specify a valid duration");
 	}
 	if $number < 1 {
@@ -156,34 +225,29 @@ multi sub MAIN("log",
 	$since = $since.earlier([
 								   Pair.new($duration, $number)
 							   ]);
-
-	my @timers = timers-since($since.posix(), $connection);
-	for @timers -> %timer {
-		%timer<projects> = timer-projects(%timer, $connection);
-		%timer<tags> = timer-tags(%timer, $connection);
-	}
-	display-timers-as-table(@timers, "All Timers");
-}
-
-#| lets you know if there are any timers running & what they are for
-multi sub MAIN("running") {
-	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
-	my $connection = $db.db;
-	my $timers = current-timers($connection);
-	if $timers ~~ Some {
-		my $timers_value = $timers.value;
-		for $timers_value.Array -> $timer_hash {
-			$timer_hash<projects> = timer-projects($timer_hash, $connection);
-			$timer_hash<tags> = timer-tags($timer_hash, $connection);
+	#Such Hack!
+    # So Inelegant!
+    if $type eq "timers" {
+		my @timers = timers-since($since.posix(), $connection);
+		for @timers -> %timer {
+			%timer<projects> = timer-projects(%timer, $connection);
+			%timer<people> = [];
+			%timer<tags> = timer-tags(%timer, $connection);
 		}
-		display-timers-as-table($timers_value, "Running Timers", False);
+		display-timers-as-table(@timers, "All Interruptions");
 	} else {
-		say("No timer running.");
+		my @interruptions = interruptions-since($since.posix(), $connection);
+		for @interruptions -> %interruption {
+			%interruption<projects> = interruption-projects(%interruption, $connection);
+			%interruption<people> = interruption-people(%interruption, $connection);
+			%interruption<tags> = interruption-tags(%interruption, $connection);
+		}
+		display-interruptions-as-table(@interruptions, "All Interruptions");
 	}
+
+
 }
 
-#-----
-# SUPPORT METHODS
 sub has-timer-args(@args) returns Bool {
 	# 4 minutes ago
 	# at 12:30, at 12

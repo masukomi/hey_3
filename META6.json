@@ -32,7 +32,8 @@
   "provides": {
     "Hey::Resourcer": "lib/Hey/Resourcer.rakumod",
     "Hey::Database": "lib/Hey/Database.rakumod",
-    "Hey::Timer": "lib/Hey/Timer.rakumod"
+    "Hey::Timer": "lib/Hey/Timer.rakumod",
+    "Hey::Interruption": "lib/Hey/Interruption.rakumod"
   },
   "resources": [
     "data/hey/hey.db"
