@@ -30,19 +30,20 @@
   "name": "Hey",
   "perl": "6.d",
   "provides": {
-    "Hey::Resourcer": "lib/Hey/Resourcer.rakumod",
     "Hey::Database": "lib/Hey/Database.rakumod",
-    "Hey::Timer": "lib/Hey/Timer.rakumod",
-    "Hey::Interruption": "lib/Hey/Interruption.rakumod"
+    "Hey::Interruption": "lib/Hey/Interruption.rakumod",
+    "Hey::Resourcer": "lib/Hey/Resourcer.rakumod",
+    "Hey::Timer": "lib/Hey/Timer.rakumod"
   },
   "resources": [
     "data/hey/hey.db"
   ],
   "source-url": "https://github.com/masukomi/hey_3",
   "tags": [
-    "cli", "timetracking"
+    "cli",
+    "timetracking"
   ],
   "test-depends": [
   ],
-  "version": "1.0.0-beta.1"
+  "version": "1.0.0-beta.2"
 }
