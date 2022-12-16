@@ -171,6 +171,8 @@ Now, go back and run the `zef install Hey` command from above.
 
 
 ## Coming soon
+### Tagging After The fact
+Sometimes you'll record an interruption, or some work, but forget to add a tag. 
 ### Reports
 * Graph Interruptions over time, to find parts of the day where you're most likely to be able to focus, or need to hide.
 * Graph Interruptions by people to find out who you need to talk to.
