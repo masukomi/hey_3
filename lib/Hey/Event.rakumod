@@ -119,7 +119,7 @@ our sub is-x-evented(Int $event_id, Int $x_id, Str $x_singular, Str $x_plural, D
 	SELECT count(*) from events_$($x_plural)
 	WHERE
 	  event_id = $event_id
-	  AND $x_id = $x_id
+	  AND $($x_singular)_id = $x_id
 	END
 	my $count = $connection.query($query_sql).value;
 	return $count > 0;
