@@ -75,6 +75,6 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 our sub total-string(Int $started_at, $ended_at) {
 	return "ongoing" unless $ended_at ~~ Int;
 	my $seconds = $ended_at - $started_at;
-	return duration($seconds);
+	return concise(duration($seconds));
 
 }
