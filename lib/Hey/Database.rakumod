@@ -125,7 +125,7 @@ our sub create-tag(Str $tag, DB::Connection $connection) returns Hash is export 
 	INSERT INTO tags (name) VALUES (?)
 	END
 	my $statement_handle = $connection.prepare($insert_sql);
-	my $rows_changed = $statement_handle.execute([$tag]);
+	my $rows_changed = $statement_handle.execute([$tag.subst(/^ "+"/, "")]);
 	return find-tag($tag, $connection).value;
 }
 

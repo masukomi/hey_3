@@ -20,15 +20,15 @@ our sub interruptions-since(
 }
 
 our sub interruption-people(
-	Hash $interruption_hash,
+	Int $interruption_id,
 	DB::Connection $connection
 ) returns Array is export {
-	return find-people-for-event($interruption_hash,
+	return find-people-for-event($interruption_id,
 								$connection);
 }
 
-our sub interruption-projects(Hash $interruption_hash, DB::Connection $connection) returns Array is export {
-	return find-projects-for-event($interruption_hash, $connection);
+our sub interruption-projects(Int $interruption_id, DB::Connection $connection) returns Array is export {
+	return find-projects-for-event($interruption_id, $connection);
 }
 
 # TODO this should be extracted out to Event as event-tags

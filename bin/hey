@@ -294,8 +294,8 @@ sub generate-log(Str $type, Int $number, Str $duration){
 	} else {
 		my @interruptions = interruptions-since($since.posix(), $connection, order => 'ASC');
 		for @interruptions -> %interruption {
-			%interruption<projects> = interruption-projects(%interruption, $connection);
-			%interruption<people> = interruption-people(%interruption, $connection);
+			%interruption<projects> = interruption-projects(%interruption<id>, $connection);
+			%interruption<people> = interruption-people(%interruption<id>, $connection);
 			%interruption<tags> = interruption-tags(%interruption, $connection);
 		}
 		if @interruptions.is-empty {
