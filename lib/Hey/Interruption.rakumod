@@ -36,7 +36,6 @@ our sub interruption-tags(Hash $interruption_hash, DB::Connection $connection) r
 
 # assumes each hash has a <projects> key with an array of project hashes
 our sub display-interruptions-as-table(@interruption_hashes, $title, Bool $include_summary = True) is export {
-	my @sorted_interruptions = @interruption_hashes.sort({$^a<started_at> cmp $^b<started_at>});
 	my $table = Prettier::Table.new(
 		title => $title,
 		field-names => ['ID', 'Started', 'People', 'Projects', 'Tags'],
@@ -48,7 +47,7 @@ our sub display-interruptions-as-table(@interruption_hashes, $title, Bool $inclu
 	my @all_projects = [];
 	my @all_people = [];
 	my @all_tags = [];
-	for @sorted_interruptions -> %interruption_hash {
+	for @interruption_hashes -> %interruption_hash {
 		my $dt = DateTime.new(%interruption_hash<started_at>);
 		my @project_names = %interruption_hash<projects>.map({$_<name>});
 		my @people_names = %interruption_hash<people>.map({$_<name>});

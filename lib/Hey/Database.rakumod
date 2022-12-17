@@ -60,12 +60,12 @@ our sub find-event-by-id(Int $id, Str $type, DB::Connection $connection) returns
 
 }
 
-our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connection) returns Array is export {
-	my $sql = q:to/END/;
+our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connection, Str :$order='DESC') returns Array is export {
+	my $sql = qq:to/END/;
 		SELECT * from events
 		WHERE type = ?
 	          AND started_at >= ?
-		order by id DESC;
+		order by id $order;
 	END
 
 	$connection.query($sql, $type, $epoch_since).hashes.Array;
