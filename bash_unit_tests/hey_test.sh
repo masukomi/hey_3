@@ -40,8 +40,9 @@ test_04_log-interrupts_empty(){
 test_05_add-interrupt(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
+	event_count=$(sqlite3 $DB_LOCATION "select count(*) from events")
+	assert_equals "1" $event_count;
 }
-
 test_06_add-interrupt_w_proj_and_tag(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob @foo +bar)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
@@ -57,10 +58,72 @@ test_07_interrupt_log(){
 	title_lines=$(echo "$output" | grep "All Interruptions" | wc -l)
 	assert_equals "1" $title_lines
 }
-test_08_timer_log_still_empty(){
+
+# we're asking for a 1 day log so nothing from yesterday should be
+# in it
+test_08_old_interrupt_not_in_log(){
+	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob 24 hours ago)
+	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
+	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
+	lines=$(echo "$output" | wc -l);
+	assert_equals "9" $lines
+}
+
+# we've just added interrupts so nothing should be in the timer
+# log yet
+test_09_timer_log_still_empty(){
 	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log 1 day)
 	assert_equals "No timers found" "$no_content_output"
 }
+
+test_10_start_timer(){
+
+	new_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start @project_x @project_y +tag1 +tag2)
+	timer_id=$(echo "$new_timer_output" | sed -e "s/.*(//" -e "s/).*//")
+
+	# strip the id and the time
+	non_specific_response=$(echo "$new_timer_output" | sed -e "s/(.*) //" -e "s/ at .*/ at/")
+	assert_equals "Started Timer for project_x, project_y at" "$non_specific_response"
+	# check that the projects were created
+	project_count=$(sqlite3 $DB_LOCATION "select count(*) from projects where name='project_x' OR name='project_y'")
+	assert_equals "2" $project_count "wrong number of projects";
+
+	# check that the tags were created
+	tag_count=$(sqlite3 $DB_LOCATION "select count(*) from tags where name='tag1' OR name='tag2'")
+	assert_equals "2" $tag_count "wrong number of tags";
+
+	#check that the projects were bound to the event
+	bound_project_count=$(sqlite3 $DB_LOCATION "select count(*) from events_projects where event_id = $timer_id")
+	assert_equals "2" $bound_project_count "wrong number of associated projects";
+
+	#check that the tags were bound to the event
+	bound_tag_count=$(sqlite3 $DB_LOCATION "select count(*) from events_tags where event_id = $timer_id")
+	assert_equals "2" $bound_tag_count "wrong number of associated tags";
+
+	# check that the timer has a start date and no end date
+	date_check=$(sqlite3 $DB_LOCATION "select started_at, ended_at from events where id = $timer_id")
+	# a ten digit number followed by a pipe and then nothing
+	assert_matches '^[0-9]{10}\|$' "$date_check" "unexpected start / end date";
+}
+
+test_11_timer_stop(){
+	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop)
+	assert_matches "Stopped at .* [0-9]{1,2}:[0-9]{2}" "$stop_output"
+	date_check=$(sqlite3 $DB_LOCATION "select started_at, ended_at from events order by id DESC limit 1")
+	# test that the stop got recorded
+	# a ten digit start and end time separated by a pipe character
+	assert_matches '^[0-9]{10}\|[0-9]{10}$' "$date_check" "unexpected start / end date";
+}
+
+### TODO
+# Come up with a good way to test the relative and absolute backdating.
+# Note that it's handled in the same place so we don't have to test it
+# separately for timers & interrupts, at least not in detail.
+# We _do_ need to test that it's still wired up for start, stop, and
+# interrupt
+
+
+
 
 
 
