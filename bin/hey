@@ -203,7 +203,7 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 	for %compiled_args<tags>.Array -> $tag { # may be empty list
 		tag-event($tag, $event_hash<id>, $connection);
 	}
-	say("Recorded interruption by $name");
+	say("Gotcha. 'twas $name");
 }
 
 #| Remove an unwanted timer.
