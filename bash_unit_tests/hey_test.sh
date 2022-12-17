@@ -35,15 +35,25 @@ test_04_log-interrupts_empty(){
 	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
 	assert_equals "No interruptions found" "$no_content_output"
 }
-#
-# test_04_hyphen_hyphen_version () {
-#   hey_hyphen_v=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION --version 2>&1 | sed -e "s/ running.*//")
-#   assert_equals "hey - provided by  ," "$hey_hyphen_v"\
-# 	  "should provide usage for hey --version"
-#
-#   assert_status_code 2 `$HEY_INVOCATION --version > /dev/null 2>&1`
-# }
-#
+
+## Interruptions
+test_05_add-interrupt(){
+	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob)
+	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
+}
+test_06_add-interrupt_w_proj_and_tag(){
+	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob @foo +bar)
+	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
+	tag_count=$(sqlite3 $DB_LOCATION "select count(*) from tags where name='bar'")
+	assert_equals "1" $tag_count;
+	project_count=$(sqlite3 $DB_LOCATION "select count(*) from projects where name='foo'")
+	assert_equals "1" $project_count;
+}
+
+
+
+
+
 # test_05_add_new() {
 # 	file_path=$TEST_DATA_DIR"/raku_test_no_demo.toml"
 # 	add_new_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION add $file_path | sed -e "s/ \/.*//")
