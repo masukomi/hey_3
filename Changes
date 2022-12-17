@@ -1,5 +1,28 @@
 Revision history for Hey
 
+## [1.0.0-beta.5] - 2022-12-17
+ADDED
+- Tests! Most everything has test coverage now, except for the backdating and date specification in logs. PRs welcome.
+- Ability to specify sorting when retrieving events.
+
+CHANGED
+- Log output now has "concise" durations.
+  Ex. "2 hours and 23 minutes" is now written as "2h23m".
+  Note: that's a bit too "consice" for my liking but it's what the
+  library offered.
+- Table generators are no longer overriding sorting of the list passed
+  in.
+- MAJOR refactoring. Took most of the methods out of
+  `Database.rakumod` and moved them into domain specific files.
+- Now prints out nice message instead of empty table when there are no
+  timers or interrupts recorded in the specified duration.
+- logs now use 12hr time with AM/PM designation.
+
+FIXED
+- changed the logging to use cultural durations instead of literal.
+  See README for details. tl;dr: 1 day gets you today. 1 week gets you
+this week. Hours, minutes, and seconds are literal amounts.
+
 ## [1.0.0-beta.4] - 2022-12-16
 ADDED
 - now you can kill a specific timer
