@@ -422,5 +422,5 @@ sub guarantee-db() returns Str {
 }
 
 sub datestring(DateTime $dt) returns Str {
-	strftime("%a, %H:%M", $dt.local);
+	strftime("%a, %I:%M %p", $dt.local);
 }
