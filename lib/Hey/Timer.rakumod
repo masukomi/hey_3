@@ -3,6 +3,7 @@ unit module Hey::Timer;
 use Hey::Database;
 use Hey::Event;
 use Hey::Project;
+use Hey::Tag;
 use Definitely;
 use DB::SQLite;
 use Prettier::Table;
@@ -18,11 +19,11 @@ our sub timers-since(Int $epoch_since, DB::Connection $connection, Str :$order='
 	find-events-since("timer", $epoch_since, $connection, order=>$order)
 }
 
-our sub timer-projects(Hash $timer_hash, DB::Connection $connection) returns Array is export {
-	return find-projects-for-event($timer_hash, $connection);
+our sub timer-projects(Int $timer_id, DB::Connection $connection) returns Array is export {
+	return find-projects-for-event($timer_id, $connection);
 }
-our sub timer-tags(Hash $timer_hash, DB::Connection $connection) returns Array is export {
-	return find-tags-for-event($timer_hash, $connection);
+our sub timer-tags(Int $timer_id, DB::Connection $connection) returns Array is export {
+	return find-tags-for-event($timer_id, $connection);
 }
 
 

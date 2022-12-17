@@ -71,8 +71,8 @@ our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) retu
 	find-things-by-ids($project_ids, 'projects', $connection);
 }
 
-our sub find-projects-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
-	my $project_ids = find-thing-ids-for-event($event_hash<id>, 'project', 'projects', $connection);
+our sub find-projects-for-event(Int $event_id, DB::Connection $connection) returns Array is export {
+	my $project_ids = find-thing-ids-for-event($event_id, 'project', 'projects', $connection);
 	return $project_ids if $project_ids.elems == 0;
 	return find-projects-by-id($project_ids, $connection);
 }

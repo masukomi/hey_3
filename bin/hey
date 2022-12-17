@@ -31,16 +31,17 @@ use lib 'lib';
 use DB::SQLite;
 use XDG::GuaranteedResources;
 use Listicles;
-use Hey::Database;
-use Hey::Resourcer;
-use Hey::Project;
-use Hey::Event;
-use Hey::Person;
-use Hey::Timer;
-use Hey::Interruption;
-use Hey::Utilities;
 use DateTime::Format;
 use Definitely;
+use Hey::Database;
+use Hey::Event;
+use Hey::Interruption;
+use Hey::Person;
+use Hey::Project;
+use Hey::Resourcer;
+use Hey::Tag;
+use Hey::Timer;
+use Hey::Utilities;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
@@ -161,7 +162,7 @@ multi sub MAIN("running") {
 		my $timers_value = $timers.value;
 		for $timers_value.Array -> $timer_hash {
 			$timer_hash<projects> = timer-projects($timer_hash, $connection);
-			$timer_hash<tags> = timer-tags($timer_hash, $connection);
+			$timer_hash<tags> = timer-tags($timer_hash<id>, $connection);
 		}
 		display-timers-as-table($timers_value, "Running Timers", False);
 	} else {
@@ -282,9 +283,9 @@ sub generate-log(Str $type, Int $number, Str $duration){
     if $type eq "timers" {
 		my @timers = timers-since($since.posix(), $connection, order => 'ASC');
 		for @timers -> %timer {
-			%timer<projects> = timer-projects(%timer, $connection);
+			%timer<projects> = timer-projects(%timer<id>, $connection);
 			%timer<people> = [];
-			%timer<tags> = timer-tags(%timer, $connection);
+			%timer<tags> = timer-tags(%timer<id>, $connection);
 		}
 		if @timers.is-empty {
 			say("No timers found");
@@ -296,7 +297,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 		for @interruptions -> %interruption {
 			%interruption<projects> = interruption-projects(%interruption<id>, $connection);
 			%interruption<people> = interruption-people(%interruption<id>, $connection);
-			%interruption<tags> = interruption-tags(%interruption, $connection);
+			%interruption<tags> = interruption-tags(%interruption<id>, $connection);
 		}
 		if @interruptions.is-empty {
 			say("No interruptions found");

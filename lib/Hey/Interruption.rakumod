@@ -4,6 +4,7 @@ use Hey::Database;
 use Hey::Project;
 use Hey::Event;
 use Hey::Person;
+use Hey::Tag;
 use Definitely;
 use DB::SQLite;
 use Prettier::Table;
@@ -32,8 +33,8 @@ our sub interruption-projects(Int $interruption_id, DB::Connection $connection) 
 }
 
 # TODO this should be extracted out to Event as event-tags
-our sub interruption-tags(Hash $interruption_hash, DB::Connection $connection) returns Array is export {
-	return find-tags-for-event($interruption_hash, $connection);
+our sub interruption-tags(Int $interruption_id, DB::Connection $connection) returns Array is export {
+	return find-tags-for-event($interruption_id, $connection);
 }
 
 

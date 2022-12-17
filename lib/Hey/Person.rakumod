@@ -25,13 +25,13 @@ use Hey::Database;
 use Hey::Event;
 
 our sub find-people-for-event(Int $event_id, DB::Connection $connection) returns Array is export {
-	my $person_ids = find-thing-ids-for-event($event_id, 'person', 'persons', $connection);
+	my $person_ids = find-thing-ids-for-event($event_id, 'person', 'people', $connection);
 	return $person_ids if $person_ids.elems == 0;
 	return find-people-by-id($person_ids, $connection);
 }
 
 our sub find-people-by-id(Array $person_ids, DB::Connection $connection) returns Array is export {
-	find-things-by-id($person_ids, 'people', $connection)
+	find-things-by-ids($person_ids, 'people', $connection)
 }
 
 # Takes in a person, returns the id of the newly created person
@@ -53,7 +53,7 @@ our sub find-or-create-person(Str $person, DB::Connection $connection) returns H
 }
 
 our sub find-person(Str $person, DB::Connection $connection) returns Maybe[Hash] is export {
-	find-x-by-name($name, 'people', $connection);
+	find-x-by-name($person, 'people', $connection);
 }
 
 our sub bind-event-person(Int $event_id, Int $person_id, DB::Connection $connection) is export {
