@@ -35,6 +35,7 @@ use Hey::Database;
 use Hey::Resourcer;
 use Hey::Project;
 use Hey::Event;
+use Hey::Person;
 use Hey::Timer;
 use Hey::Interruption;
 use Hey::Utilities;

@@ -3,6 +3,7 @@ unit module Hey::Interruption;
 use Hey::Database;
 use Hey::Project;
 use Hey::Event;
+use Hey::Person;
 use Definitely;
 use DB::SQLite;
 use Prettier::Table;

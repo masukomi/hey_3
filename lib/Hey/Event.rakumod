@@ -131,3 +131,27 @@ our sub bind-x-to-event(Int $event_id, Int $x_id, Str $x_singular, Str $x_plural
 	END
 	$connection.prepare($insert_sql).execute();
 }
+
+our sub kill-event(Int $event_id, DB::Connection $connection) is export {
+	# find events only associated with that person
+	# at the moment events are ONLY associated with one person, so we can cheat
+
+	my $sql = qq:to/END/;
+	DELETE FROM events_people
+	WHERE event_id = $event_id
+	END
+	my $count = $connection.query($sql);
+
+	$sql = qq:to/END/;
+	DELETE FROM events_tags
+	WHERE event_id = $event_id
+	END
+	$count = $connection.query($sql);
+	# just going to leave spurious tags
+
+	$sql = qq:to/END/;
+	DELETE FROM events
+	WHERE id = $event_id
+	END
+	$count = $connection.query($sql);
+}

@@ -59,6 +59,24 @@ test_07_interrupt_log(){
 	assert_equals "1" $title_lines
 }
 
+test_08_kill_person(){
+	original_tag_count=$(sqlite3 $DB_LOCATION "select count(*) from tags where name='bar'")
+	original_project_count=$(sqlite3 $DB_LOCATION "select count(*) from projects where name='foo'")
+
+	kill_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION kill bob)
+	assert_equals "bob is dead. Long live bob." "$kill_interrupt_output"
+	new_tag_count=$(sqlite3 $DB_LOCATION "select count(*) from tags where name='bar'")
+	new_project_count=$(sqlite3 $DB_LOCATION "select count(*) from projects where name='foo'")
+
+	assert_equals $original_tag_count $new_tag_count \
+		"number of tags shouldn't have changed when killing person"
+	assert_equals $original_project_count $new_project_count \
+		"number of projects shouldn't have changed when killing person"
+	person_count=$(sqlite3 $DB_LOCATION "select count(*) from people where name='bob'")
+	assert_equals 0 $person_count "bob has escaped death!"
+
+}
+
 # we're asking for a 1 day log so nothing from yesterday should be
 # in it
 test_08_old_interrupt_not_in_log(){

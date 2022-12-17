@@ -56,14 +56,6 @@ our sub find-thing-ids-for-event(Int $event_id,
 	return $connection.query($query_sql).arrays.Array;
 }
 
-our sub find-people-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
-	my $query_sql = qq:to/END/;
-	select person_id from events_people where event_id = $event_hash<id>
-	END
-	my $person_ids = $connection.query($query_sql).arrays.Array;
-	return $person_ids if $person_ids.elems == 0;
-	return find-people-by-id($person_ids, $connection);
-}
 
 our sub find-tags-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
 	my $query_sql = qq:to/END/;
@@ -72,14 +64,6 @@ our sub find-tags-for-event(Hash $event_hash, DB::Connection $connection) return
 	my $tag_ids = $connection.query($query_sql).arrays.Array;
 	return $tag_ids if $tag_ids.elems == 0;
 	return find-tags-by-id($tag_ids, $connection);
-}
-
-our sub find-people-by-id(Array $person_ids, DB::Connection $connection) returns Array is export {
-	my $sql = q:to/END/;
-		SELECT id, name from people where id in (?);
-	END
-
-	return $connection.query($sql, $person_ids.join(", ")).hashes.Array;
 }
 
 
@@ -165,107 +149,3 @@ our sub find-tag(Str $tag,DB::Connection $connection) returns Maybe[Hash] is exp
 
 
 
-## People
-##
-# Takes in a person, returns the id of the newly created person
-our sub create-person(Str $person, DB::Connection $connection) returns Hash is export {
-	my $insert_sql = q:to/END/;
-	INSERT INTO people (name) VALUES (?)
-	END
-	my $statement_handle = $connection.prepare($insert_sql);
-	my $rows_changed = $statement_handle.execute([$person.subst(/^ "@"/, "")]);
-	my $found_person_hash = find-person($person, $connection);
-	return unwrap($found_person_hash, "Couldn't find the person I just created for $person");
-}
-
-our sub find-or-create-person(Str $person, DB::Connection $connection) returns Hash is export {
-	my $lowercased_name = $person.lc;
-	my $maybe_person = find-person($person, $connection);
-	return $maybe_person.value if $maybe_person ~~ Some;
-	return create-person($person, $connection);
-}
-
-our sub find-person(Str $person,DB::Connection $connection) returns Maybe[Hash] is export {
-	my $sql = q:to/END/;
-		SELECT id, name from people where name = ? LIMIT 1;
-	END
-
-	given $connection.query($sql, $person).hash {
-		when $_.elems > 0 {something($_)}
-		default {nothing(Hash)}
-	}
-}
-our sub bind-event-person(Int $event_id, Int $person_id, DB::Connection $connection) is export {
-
-	unless is-event-personed($event_id, $person_id, $connection) {
-		my $insert_sql = qq:to/END/;
-		INSERT INTO events_people (event_id, person_id)
-		VALUES ($event_id, $person_id);
-		END
-		$connection.prepare($insert_sql).execute();
-	}
-}
-
-our sub is-event-personed(Int $event_id, Int $person_id, DB::Connection $connection) returns Bool is export {
-	my $query_sql = qq:to/END/;
-	SELECT count(*) from events_people
-	WHERE
-	  event_id = $event_id
-	  AND person_id = $person_id
-	END
-	my $count = $connection.query($query_sql).value;
-	return $count > 0;
-}
-
-our sub kill-person(Int $person_id, DB::Connection $connection) is export {
-	# find events only associated with that person
-	# at the moment events are ONLY associated with one person, so we can cheat
-	my $sql = qq:to/END/;
-	SELECT event_id from events_people
-	WHERE person_id = $person_id
-	END
-	my @people_event_ids = $connection.query($sql).arrays.Array;
-	return unless @people_event_ids.elems > 0;
-
-	$sql = qq:to/END/;
-	DELETE FROM events_people
-	WHERE person_id = $person_id
-	END
-	my $count = $connection.query($sql);
-
-	$sql = qq:to/END/;
-	DELETE FROM events_tags
-	WHERE event_id in (?)
-	END
-	$count = $connection.query($sql, @people_event_ids.join(', '));
-	# just going to leave spurious tags
-
-	$sql = qq:to/END/;
-	DELETE FROM events
-	WHERE id in (?)
-	END
-	$count = $connection.query($sql, @people_event_ids.join(', '));
-}
-our sub kill-event(Int $event_id, DB::Connection $connection) is export {
-	# find events only associated with that person
-	# at the moment events are ONLY associated with one person, so we can cheat
-
-	my $sql = qq:to/END/;
-	DELETE FROM events_people
-	WHERE event_id = $event_id
-	END
-	my $count = $connection.query($sql);
-
-	$sql = qq:to/END/;
-	DELETE FROM events_tags
-	WHERE event_id = $event_id
-	END
-	$count = $connection.query($sql);
-	# just going to leave spurious tags
-
-	$sql = qq:to/END/;
-	DELETE FROM events
-	WHERE id = $event_id
-	END
-	$count = $connection.query($sql);
-}
