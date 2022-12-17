@@ -41,6 +41,7 @@ test_05_add-interrupt(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
 }
+
 test_06_add-interrupt_w_proj_and_tag(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob @foo +bar)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
@@ -49,7 +50,13 @@ test_06_add-interrupt_w_proj_and_tag(){
 	project_count=$(sqlite3 $DB_LOCATION "select count(*) from projects where name='foo'")
 	assert_equals "1" $project_count;
 }
-
+test_07_interrupt_log(){
+	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
+	lines=$(echo "$output" | wc -l);
+	assert_equals "9" $lines
+	title_lines=$(echo "$output" | grep "All Interruptions" | wc -l)
+	assert_equals "1" $title_lines
+}
 
 
 
