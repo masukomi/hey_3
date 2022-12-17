@@ -57,6 +57,10 @@ test_07_interrupt_log(){
 	title_lines=$(echo "$output" | grep "All Interruptions" | wc -l)
 	assert_equals "1" $title_lines
 }
+test_08_timer_log_still_empty(){
+	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log 1 day)
+	assert_equals "No timers found" "$no_content_output"
+}
 
 
 
