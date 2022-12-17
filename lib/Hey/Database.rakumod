@@ -25,10 +25,11 @@ use Definitely;
 
 our sub find-x-by-name(Str $name, Str $table, DB::Connection $connection) returns Maybe[Hash] is export {
 	my $sql = qq:to/END/;
-		SELECT id, name from ? where name = ? LIMIT 1;
+		SELECT id, name from $table where name = ? LIMIT 1;
 	END
+    #  you can't specify a table name with a ? in the current driver
 
-	given $connection.query($sql, $table, $name).hash {
+	given $connection.query($sql, $name).hash {
 		when $_.elems > 0 {something($_)}
 		default {nothing(Hash)}
 	}
