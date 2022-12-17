@@ -285,6 +285,10 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			%timer<people> = [];
 			%timer<tags> = timer-tags(%timer, $connection);
 		}
+		if @timers.is-empty {
+			say("No timers found");
+			exit 0;
+		}
 		display-timers-as-table(@timers, "All Timers", False);
 	} else {
 		my @interruptions = interruptions-since($since.posix(), $connection, order => 'ASC');
@@ -292,6 +296,10 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			%interruption<projects> = interruption-projects(%interruption, $connection);
 			%interruption<people> = interruption-people(%interruption, $connection);
 			%interruption<tags> = interruption-tags(%interruption, $connection);
+		}
+		if @interruptions.is-empty {
+			say("No interruptions found");
+			exit 0;
 		}
 		display-interruptions-as-table(@interruptions, "All Interruptions");
 	}
