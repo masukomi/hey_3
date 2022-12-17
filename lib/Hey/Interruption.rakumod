@@ -1,6 +1,8 @@
 unit module Hey::Interruption;
 
 use Hey::Database;
+use Hey::Project;
+use Hey::Event;
 use Definitely;
 use DB::SQLite;
 use Prettier::Table;
@@ -10,9 +12,10 @@ use DateTime::Format;
 
 our sub interruptions-since(
 	Int $epoch_since,
-	DB::Connection $connection
+	DB::Connection $connection,
+	Str :$order = 'ASC'
 ) returns Array is export {
-	find-events-since("interruption", $epoch_since, $connection)
+	find-events-since("interruption", $epoch_since, $connection, order => $order)
 }
 
 our sub interruption-people(
@@ -24,8 +27,7 @@ our sub interruption-people(
 }
 
 our sub interruption-projects(Hash $interruption_hash, DB::Connection $connection) returns Array is export {
-	return find-projects-for-event($interruption_hash,
-								$connection);
+	return find-projects-for-event($interruption_hash, $connection);
 }
 
 # TODO this should be extracted out to Event as event-tags

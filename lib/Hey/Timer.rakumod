@@ -1,6 +1,8 @@
 unit module Hey::Timer;
 
 use Hey::Database;
+use Hey::Event;
+use Hey::Project;
 use Definitely;
 use DB::SQLite;
 use Prettier::Table;
@@ -13,15 +15,12 @@ our sub current-timers(DB::Connection $connection) returns Maybe[Array] is expor
 }
 
 our sub timers-since(Int $epoch_since, DB::Connection $connection, Str :$order='DESC') returns Array is export {
-	note("\nXXX timers-since - \$order: " ~ $order.raku);
 	find-events-since("timer", $epoch_since, $connection, order=>$order)
 }
 
-# TODO this should be extracted out to Event as event-projects
 our sub timer-projects(Hash $timer_hash, DB::Connection $connection) returns Array is export {
 	return find-projects-for-event($timer_hash, $connection);
 }
-# TODO this should be extracted out to Event as event-tags
 our sub timer-tags(Hash $timer_hash, DB::Connection $connection) returns Array is export {
 	return find-tags-for-event($timer_hash, $connection);
 }

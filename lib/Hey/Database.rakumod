@@ -23,168 +23,36 @@ use DB::SQLite;
 use Definitely;
 
 
-# Events
-# find-last-event
-# create-event
-# stop-event
-# find-ongoing-events
-#
-
-#= a list of ongoing events ordered by oldest first
-our sub find-ongoing-events(Str $event_type, DB::Connection $connection) returns Maybe[Array] is export {
-
-	my $sql = q:to/END/;
-		SELECT * from events
-		where ended_at is null
-		and type = ?
-		order by started_at ASC
-	END
-
-	given $connection.query($sql, $event_type).hashes {
-		when $_.elems > 0 {
-			something($_.Array)
-		}
-		default {nothing(Array);}
-	}
-}
-our sub find-event-by-id(Int $id, Str $type, DB::Connection $connection) returns Maybe[Hash] is export {
+our sub find-x-by-name(Str $name, Str $table, DB::Connection $connection) returns Maybe[Hash] is export {
 	my $sql = qq:to/END/;
-	SELECT * FROM events
-	WHERE id = $id
-	AND type = ?
-	END
-	given $connection.query($sql, $type).hash {
-		when .elems > 0 {something($_)}
-		default {nothing(Hash)}
-	}
-
-}
-
-our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connection, Str :$order='DESC') returns Array is export {
-	my $sql = qq:to/END/;
-		SELECT * from events
-		WHERE type = ?
-	          AND started_at >= ?
-		order by id $order;
+		SELECT id, name from ? where name = ? LIMIT 1;
 	END
 
-	$connection.query($sql, $type, $epoch_since).hashes.Array;
-}
-our sub find-last-event(Str $type, DB::Connection $connection) returns Maybe[Hash] is export {
-	my $sql = q:to/END/;
-		SELECT * from events
-		WHERE type = ?
-		order by id DESC LIMIT 1;
-	END
-
-	given $connection.query($sql, $type).hash {
-		when $_.elems > 0 {something($_)}
-		default {nothing(Hash);}
-	}
-}
-
-our sub create-event(DB::Connection $connection,
-					 Str $event_type,
-					 Int $started_at
-					) returns Hash is export {
-	my $insert_sql = q:to/END/;
-	INSERT INTO events (started_at, type) VALUES (?, ?)
-	END
-	my $statement_handle = $connection.prepare($insert_sql);
-	my $rows_changed = $statement_handle.execute([$started_at, $event_type]);
-	return find-last-event($event_type, $connection).value; # there damn well better be one
-}
-
-our sub stop-specific-event(Int $id, Int $stopped_at, DB::Connection $connection) is export {
-	my $update_sql = qq:to/END/;
-	UPDATE events set ended_at = $stopped_at
-	WHERE id = $id
-	END
-	my $statement_handle = $connection.prepare($update_sql);
-	$statement_handle.execute(); # or go boom
-	return True;
-}
-
-our sub stop-event(Int $stopped_at,
-				   DB::Connection $connection,
-				  ) returns Bool is export {
-	my $maybe_last_event = find-last-event("timer", $connection);
-	return False unless $maybe_last_event ~~ Some;
-
-	my $last_event_id = $maybe_last_event.value<id>;
-	stop-specific-event($last_event_id, $stopped_at, $connection);
-}
-
-#TODO: the 3 project methods are copy-pasta of the similar tag methods.
-# REFACTOR
-
-
-# Project
-# find-or-create-project
-# find-project
-# create-project
-# bind-event-project
-
-our sub bind-event-project(Int $event_id, Int $project_id, DB::Connection $connection) is export {
-
-	unless is-event-projected($event_id, $project_id, $connection) {
-		my $insert_sql = qq:to/END/;
-		INSERT INTO events_projects (event_id, project_id)
-		VALUES ($event_id, $project_id);
-		END
-		$connection.prepare($insert_sql).execute();
-	}
-}
-
-our sub is-event-projected(Int $event_id, Int $project_id, DB::Connection $connection) returns Bool is export {
-	my $query_sql = qq:to/END/;
-	SELECT count(*) from events_projects
-	WHERE
-	  event_id = $event_id
-	  AND project_id = $project_id
-	END
-	my $count = $connection.query($query_sql).value;
-	return $count > 0;
-}
-
-
-
-# Takes in a project, returns the id of the newly created project
-our sub create-project(Str $project, DB::Connection $connection) returns Hash is export {
-	my $insert_sql = q:to/END/;
-	INSERT INTO projects (name) VALUES (?)
-	END
-	my $statement_handle = $connection.prepare($insert_sql);
-	my $rows_changed = $statement_handle.execute([$project.subst(/^ "@"/, "")]);
-	my $found_project_hash = find-project($project, $connection);
-	return unwrap($found_project_hash, "Couldn't find the project I just created for $project");
-}
-
-our sub find-or-create-project(Str $project, DB::Connection $connection) returns Hash is export {
-	my $lowercased_name = $project.lc;
-	my $maybe_project = find-project($project, $connection);
-	return $maybe_project.value if $maybe_project ~~ Some;
-	return create-project($project, $connection);
-}
-
-our sub find-project(Str $project,DB::Connection $connection) returns Maybe[Hash] is export {
-	my $sql = q:to/END/;
-		SELECT id, name from projects where name = ? LIMIT 1;
-	END
-
-	given $connection.query($sql, $project).hash {
+	given $connection.query($sql, $table, $name).hash {
 		when $_.elems > 0 {something($_)}
 		default {nothing(Hash)}
 	}
 }
+our sub find-things-by-ids(Array $ids, Str $table, DB::Connection $connection) returns Array is export {
 
-our sub find-projects-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
-	my $query_sql = qq:to/END/;
-	select project_id from events_projects where event_id = $event_hash<id>
+	my $ids_string=$ids.join(', ');
+	my $sql = qq:to/END/;
+		SELECT * from $table where id in ($ids_string);
 	END
-	my $project_ids = $connection.query($query_sql).arrays.Array;
-	return $project_ids if $project_ids.elems == 0;
-	return find-projects-by-id($project_ids, $connection);
+	my $result = $connection.query($sql).hashes.Array;
+	return $result;
+}
+
+our sub find-thing-ids-for-event(Int $event_id,
+								 Str $singular_thing_type, # singular, E.g. project
+								 Str $plural_thing_type,
+								 DB::Connection $connection) returns Array is export {
+	my $query_sql = qq:to/END/;
+	SELECT $($singular_thing_type)_id FROM events_$($plural_thing_type)
+	WHERE event_id = $event_id
+	END
+
+	return $connection.query($query_sql).arrays.Array;
 }
 
 our sub find-people-for-event(Hash $event_hash, DB::Connection $connection) returns Array is export {
@@ -205,14 +73,6 @@ our sub find-tags-for-event(Hash $event_hash, DB::Connection $connection) return
 	return find-tags-by-id($tag_ids, $connection);
 }
 
-our sub find-projects-by-id(Array $project_ids, DB::Connection $connection) returns Array is export {
-	my $project_ids_string=$project_ids.join(', ');
-	my $sql = qq:to/END/;
-		SELECT id, name from projects where id in ($project_ids_string);
-	END
-	my $result = $connection.query($sql).hashes.Array;
-	return $result;
-}
 our sub find-people-by-id(Array $person_ids, DB::Connection $connection) returns Array is export {
 	my $sql = q:to/END/;
 		SELECT id, name from people where id in (?);

@@ -33,6 +33,8 @@ use XDG::GuaranteedResources;
 use Listicles;
 use Hey::Database;
 use Hey::Resourcer;
+use Hey::Project;
+use Hey::Event;
 use Hey::Timer;
 use Hey::Interruption;
 use Hey::Utilities;
