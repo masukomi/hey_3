@@ -35,6 +35,7 @@ use Hey::Database;
 use Hey::Resourcer;
 use Hey::Timer;
 use Hey::Interruption;
+use Hey::Utilities;
 use DateTime::Format;
 use Definitely;
 
@@ -253,23 +254,30 @@ sub generate-log(Str $type, Int $number, Str $duration){
 	#TODO limit & group by day, or week or whatever
 	my $since = DateTime.now().local;
 	if (! ["minute", "minutes", "second", "seconds", "hour", "hours"].includes( $duration) ) {
-		# drop it back to midnight
-		# because when someone says 1 day ago
-		# they don't mean 24hrs from this moment.
-		# they mean, all of yesterday.
-		$since = $since.earlier([
-			hours => $since.hour,
-			minutes => $since.minute,
-			seconds => $since.second]
-		)
+		# we're talking days/months.
+		# If you ask for 1 day you mean "today"
+		if $duration eq 'day' or $duration eq 'days' {
+			$since = midnightify($since);
+		} else {
+			# -1 because if we're on the first day already we don't want to go back past it.
+			my $day_num = -1;
+			if $duration eq 'week' or $duration eq 'weeks' {
+				$day_num += $since.day-of-week;
+			} elsif $duration eq 'month' or $duration eq 'months' {
+				$day_num += $since.day-of-month;
+			} else {
+				$day_num += $since.day-of-year;
+			}
+			$since = midnightify($since.earlier(days => $day_num));
+		}
+	} else {
+		$since = $since.earlier([Pair.new($duration, $number)]);
 	}
-	$since = $since.earlier([
-								   Pair.new($duration, $number)
-							   ]);
+
 	#Such Hack!
     # So Inelegant!
     if $type eq "timers" {
-		my @timers = timers-since($since.posix(), $connection);
+		my @timers = timers-since($since.posix(), $connection, order => 'ASC');
 		for @timers -> %timer {
 			%timer<projects> = timer-projects(%timer, $connection);
 			%timer<people> = [];
@@ -277,7 +285,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 		}
 		display-timers-as-table(@timers, "All Timers", False);
 	} else {
-		my @interruptions = interruptions-since($since.posix(), $connection);
+		my @interruptions = interruptions-since($since.posix(), $connection, order => 'ASC');
 		for @interruptions -> %interruption {
 			%interruption<projects> = interruption-projects(%interruption, $connection);
 			%interruption<people> = interruption-people(%interruption, $connection);
