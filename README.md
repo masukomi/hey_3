@@ -139,7 +139,18 @@ hey log 4 days
 hey log 24 hours
 ```
 
-Note: if you choose a duration of days or longer, it will do the number specified since midnight at the start of today. 
+Note: when it comes to durations of a day or larger it uses cultural meaning not literal meaning. 
+
+So, for example:
+
+* `hey log 1 day` is going to get you _today's_ log. 
+* `hey log 1 week` is going to get you _this week's_ log. Monday is treated as the start of the week, so if it's Monday you'll only see one day worth of records. 
+* `hey log 1 month` is going to get you _this month's_ log.
+* `hey log 1 year` is going to get you _this year's_ log.
+
+Day's an larger all count from midnight. All times _should_ be local.
+
+If you want a specific and literal amount of time use seconds, minutes, or hours. 
 
 So, for example, `hey log 1 day` doesn't get you the past 24 hours worth of logs. It gets you everything from midnight yesterday. If you really want 24 hours, just say `hey log 24 hours`.
 
@@ -188,32 +199,39 @@ Now, go back and run the `zef install Hey` command from above.
 
 
 ## Coming soon
+
 ### Tagging After The fact
 Sometimes you'll record an interruption, or some work, but forget to add a tag. 
+
 ### Reports
 * Graph Interruptions over time, to find parts of the day where you're most likely to be able to focus, or need to hide.
 * Graph Interruptions by people to find out who you need to talk to.
 * Graph Interruptions by tag or projects to find out where you would best benefit from adding documentation.
 
-### Tests! 
-oooh. ahhh. 
+### Configuration
+It'd be nice to be able to configure things, such as when the start of the day is. Many of us work past midnight, and consider it part of the prior day's work. So, it'd be nice to have the logging use our preferred "start of day" time. [Here's the GitHub issue for that feature](https://github.com/masukomi/hey_3/issues/3).
 
-I'll be using [bash_unit](https://github.com/pgrange/bash_unit) because testing an app where 90% of the behaviors are based upon side-effects of data that may, or may not, have been persisted in the DB is way easier at the system level. See [TooLoo](https://tooloo.dev) for an example of what these tests will look like.
-
-Why aren't they there now? Because I just needed something quick and dirty and the Magic of Raku made this way more useful than I expected with very little code.
+I'm betting you might have ideas for configurations too. Like, maybe colors for specific data types in the report? 
 
 # CONTRIBUTING
 
 Pull Requests are _very_ welcomed. 
 
-Please note. This code was written in a rush. There's a lot of refactoring and cleanup to do.
-
 I'm using this daily now so there will be modifications and improvements over time. I'm especially interested in adding useful reporting and data extraction functionality. 
 
-Let's chat [on Mastodon](https://connectified.com/@masukomi) if you've got some ideas. Alternately, just file a 
+Let's chat [on Mastodon](https://connectified.com/@masukomi) if you've got some ideas. Alternately, just [file a new ticket on github](https://github.com/masukomi/hey_3/issues).
 
 Note: this app's version numbers follow strict [Semantic Versioning](https://semver.org). 
 
+## Tests
+
+The test suite uses [bash_unit](https://github.com/pgrange/bash_unit) because testing an app where 90% of the behaviors are based upon side-effects of data that may, or may not, have been persisted in the DB is way easier to write System tests for than Unit tests. If you feel like writing some Raku unit tests with all the stubbing that that will require, I'll happily merge the PR. 
+
+Regardless of unit tests, if you do add / change functionality please include additional bash_unit tests with your PR.
+
+The bash_unit tests can be run by changing into the `bash_unit_tests` directory and running `bash_unit hey_test.sh`
+
+Note that these will work on a local test database, so you don't have to worry about hurting your real time & interruption tracking data. 
 
 # AUTHOR
 

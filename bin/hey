@@ -274,6 +274,9 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			}
 			$since = midnightify($since.earlier(days => $day_num));
 		}
+		if $number > 1 {
+			$since = $since.earlier([Pair.new($duration, $number - 1)]);
+		}
 	} else {
 		$since = $since.earlier([Pair.new($duration, $number)]);
 	}
