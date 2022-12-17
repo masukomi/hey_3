@@ -46,7 +46,7 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 		my @tag_names = %timer_hash<tags>.map({$_<name>});
 		$table.add-row([
 							  %timer_hash<id>,
-							  strftime("%m/%d %H:%M", $dt.local),
+							  strftime("%m/%d %I:%M %p", $dt.local),
 							  total-string(%timer_hash<started_at>,
 										  %timer_hash<ended_at>),
 							  @project_names.sort.join(", "),
