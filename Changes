@@ -1,5 +1,20 @@
 Revision history for Hey
 
+## [1.0.0-beta.6] - 2022-12-18
+ADDED
+- hey nevermind
+  deletes the most recent running timer
+- duration-string method in Utilities
+- timer-duration method in Timer
+FIXED
+- hey running
+  It was calling an old method signature that was erroring out.
+  A test has been added.
+
+CHANGED
+- hey stop
+  It now tells you the duration of the timer that you just stopped
+
 ## [1.0.0-beta.5] - 2022-12-17
 ADDED
 - Tests! Most everything has test coverage now, except for the backdating and date specification in logs. PRs welcome.

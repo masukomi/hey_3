@@ -20,6 +20,7 @@ Usage:
   hey running -- lets you know if there are any timers running & what they are for
   hey <name> [<start_args> ...] -- Record an interruption
   hey kill timer <id> -- Remove an unwanted timer.
+  hey nevermind -- Cancel & delete the most recent running timer
   hey kill <name> -- Remove an unwanted person / thing from interruptions
 
     [<start_args> ...]    optional time adjustment, project(s), & optional tags
@@ -123,6 +124,25 @@ hey kill timer 4
 
 A timer's id is shown when you create a new timer, or when you view
 the log.
+
+#### Alternately....
+
+Stop the most recently created running timer without knowing its ID.
+
+```
+hey nevermind
+```
+
+Why? Because I keep starting a timer and then finding myself being
+retasked. For example: 
+
+> me: "I'm going to start cooking..." 
+> `hey start @cooking`
+> wifey: "Maybe you should walk the dogs first so that they don't
+> annoy you with constantly wanting to go in and out."
+> me: 🤔
+> `hey nevermind`
+> `hey start @dogs +walking`
 
 
 ## Viewing the Log
