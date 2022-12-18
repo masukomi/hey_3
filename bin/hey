@@ -224,6 +224,24 @@ multi sub MAIN("kill",
 		exit 64;
 	}
 }
+
+#| Cancel & delete the most recent running timer
+multi sub MAIN("nevermind") {
+
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $current_timers = current-timers($connection);
+	if $current_timers ~~ Some {
+		my $timers = $current_timers.value;
+		if ! $timers.is-empty {
+			kill-event($timers.tail<id>, $connection);
+			say("We shall never speak of it again.")
+		} else {
+			note("The wasn't anything running.");
+		}
+	}
+}
+
 #| Remove an unwanted person / thing from interruptions
 multi sub MAIN("kill",
 			   Str $name #= the name of the person/thing you wish to.... remove the records of
