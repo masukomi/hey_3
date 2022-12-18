@@ -124,13 +124,29 @@ test_10_start_timer(){
 	assert_matches '^[0-9]{10}\|$' "$date_check" "unexpected start / end date";
 }
 
-test_11_timer_stop(){
+test_11_running(){
+	running_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION running | grep ongoing)
+
+	assert_matches ".*ongoing.*" "$running_output"
+}
+
+test_12_timer_stop(){
 	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop)
 	assert_matches "Stopped at .* [0-9]{1,2}:[0-9]{2}" "$stop_output"
 	date_check=$(sqlite3 $DB_LOCATION "select started_at, ended_at from events order by id DESC limit 1")
 	# test that the stop got recorded
 	# a ten digit start and end time separated by a pipe character
 	assert_matches '^[0-9]{10}\|[0-9]{10}$' "$date_check" "unexpected start / end date";
+}
+
+test_13_nevermind(){
+	new_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start @foo)
+	timer_id=$(echo "$new_timer_output" | sed -e "s/.*(//" -e "s/).*//")
+	nevermind_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind)
+	assert_equals "We shall never speak of it again." "$nevermind_output"
+
+	killed_timer_count=$(sqlite3 $DB_LOCATION "select count(*) from events where id = $timer_id")
+	assert_equals "0" $killed_timer_count "'nevermind'ing a timer didn't delete it";
 }
 
 ### TODO
