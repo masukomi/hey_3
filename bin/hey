@@ -125,12 +125,27 @@ multi sub MAIN("stop",
 	if %compiled_args<time_stuff>.elems > 0 {
 		$time = adjust-date-time($time, %compiled_args<time_stuff>)
 	}
-    my $stopped = ($id == -1)
-					?? stop-event($time.posix(), $connection)
-					!! stop-specific-event($id, $time.posix(), $connection);
+	my $stopped_event;
+	if ($id == -1) {
+		my $maybe_event = stop-event($time.posix(), $connection);
+		if $maybe_event ~~ Some {
+			$stopped_event = $maybe_event.value;
+		}
+	} else {
+	 	if stop-specific-event($id, $time.posix(), $connection) {
+			$stopped_event = find-event-by-id($id, 'timer', $connection);
+		} else {
+			say("No timer was running");
+			exit(0);
+		}
+	}
 
-	$stopped ?? say("Stopped at " ~ datestring($time))
-			 !! say("No timer was running");
+	$stopped_event
+		?? say("Stopped at "
+			~ datestring($time)
+			~ " after "
+			~ timer-duration($stopped_event))
+		!! say("No timer was running");
 
 }
 
