@@ -106,12 +106,15 @@ our sub stop-specific-event(Int $id, Int $stopped_at, DB::Connection $connection
 
 our sub stop-event(Int $stopped_at,
 				   DB::Connection $connection,
-				  ) returns Bool is export {
+				  )  returns Maybe[Hash] is export {
+	# must be a timer because you can't stop an interruption.
+	# once an interruption starts... it's too late.
 	my $maybe_last_event = find-last-event("timer", $connection);
 	return False unless $maybe_last_event ~~ Some;
 
 	my $last_event_id = $maybe_last_event.value<id>;
 	stop-specific-event($last_event_id, $stopped_at, $connection);
+	find-event-by-id($last_event_id, 'timer', $connection);
 }
 
 our sub is-x-evented(Int $event_id, Int $x_id, Str $x_singular, Str $x_plural, DB::Connection $connection) returns Bool  is export {
