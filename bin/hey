@@ -161,7 +161,7 @@ multi sub MAIN("running") {
 	if $timers ~~ Some {
 		my $timers_value = $timers.value;
 		for $timers_value.Array -> $timer_hash {
-			$timer_hash<projects> = timer-projects($timer_hash, $connection);
+			$timer_hash<projects> = timer-projects($timer_hash<id>, $connection);
 			$timer_hash<tags> = timer-tags($timer_hash<id>, $connection);
 		}
 		display-timers-as-table($timers_value, "Running Timers", False);
