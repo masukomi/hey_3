@@ -4,6 +4,7 @@ use Hey::Database;
 use Hey::Event;
 use Hey::Project;
 use Hey::Tag;
+use Hey::Utilities;
 use Definitely;
 use DB::SQLite;
 use Prettier::Table;
@@ -24,6 +25,10 @@ our sub timer-projects(Int $timer_id, DB::Connection $connection) returns Array 
 }
 our sub timer-tags(Int $timer_id, DB::Connection $connection) returns Array is export {
 	return find-tags-for-event($timer_id, $connection);
+}
+
+our sub timer-duration(Hash $timer_hash) returns Str is export {
+	duration-string($timer_hash<started_at>, $timer_hash<ended_at>);
 }
 
 
@@ -47,8 +52,7 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 		$table.add-row([
 							  %timer_hash<id>,
 							  strftime("%m/%d %I:%M %p", $dt.local),
-							  total-string(%timer_hash<started_at>,
-										  %timer_hash<ended_at>),
+							  timer-duration(%timer_hash),
 							  @project_names.sort.join(", "),
 							  @tag_names.sort.join(", ")
 						  ]);
@@ -72,9 +76,3 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 	say $table;
 }
 
-our sub total-string(Int $started_at, $ended_at) {
-	return "ongoing" unless $ended_at ~~ Int;
-	my $seconds = $ended_at - $started_at;
-	return concise(duration($seconds));
-
-}
