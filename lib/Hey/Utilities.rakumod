@@ -6,6 +6,9 @@ use Listicles;
 our sub time_units() returns Array is export {
 	<second seconds minute minutes hour hours day days week weeks month months year years>.Array;
 }
+our sub relative-time-regex returns Regex is export {
+	/^ \d+ \s+ \w+ \s+ "ago"/
+}
 our sub time-regex returns Regex is export {
     /^ [(\d ** 1..2) '/' (\d ** 1..2) \s+]?  (\d ** 1..2) [ ":" (\d ** 2) ]?/;
 }

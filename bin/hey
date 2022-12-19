@@ -90,6 +90,7 @@ multi sub MAIN('start',
 
 # hey stop at 4
 # hey stop at 4:30
+# hey stop at 12/14 13:30
 # hey stop 4 minutes ago
 # hey stop 2 hours ago
 
@@ -98,14 +99,16 @@ multi sub MAIN("stop",
 		*@stop_args #= optional id, and optional time adjustments (e.g. 4 minutes ago)
 		) {
 
+	my @args = @stop_args;
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now().local;
 	my $id_match =  @stop_args
 					 ?? @stop_args[0].match(/^ (\d+) $/)
 					 !! Nil;
-	my $simple_relative_time_match = @stop_args
-									  ?? @stop_args.join(" ") .match(/^ \d+ \s+ \w+ \s+ "ago"/)
+	@args = @stop_args.splice(1) if $id_match;
+	my $simple_relative_time_match = @args && @args.elems > 0
+									  ?? @args.join(" ").match(relative-time-regex)
 									  !! Nil;
 	# IF we have a realtive time match
 	# then the id match is bogus.

@@ -61,12 +61,13 @@ The start and stop of a timer can be backdated using relative or absolute times.
 Time modifiers must come immediately after start/stop. 
 
 ### Absolute Times 
-Absolute times are specified with 12 hour or 24 hour time formats. You can also just specify the hour with no minutes. The expected format is "at" followed by the time. 
+Absolute times are specified with 12 hour or 24 hour time formats. You can also just specify the hour with no minutes. The expected format is "at" followed by the time. Occasionally you'll need to specify stop a timer you left running the prior day, or maybe add a record for some time you forgot to track on a past day. In that case you can also specify the date. Dates come before times and are in MM/DD format. 
 
 ``` text
 hey start at 4 @project +tag
 hey start at 4:30 @project +tag
 hey start at 16:30 @project
+hey start at 12/16 11:50 @project
 ```
 
 The system will always assume you mean the most recent corresponding time. So, if for example it's 6PM and you say `at 4` it's going to assume you mean 2 hours ago.  If, however it's 3PM and you say `at 4` it's going to assume you meant `4 AM`. This will carry-over to the previous day if you leave a timer running overnight. 
