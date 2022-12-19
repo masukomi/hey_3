@@ -16,6 +16,20 @@ our sub current-timers(DB::Connection $connection) returns Maybe[Array] is expor
 	find-ongoing-events("timer", $connection);
 }
 
+# the return value here indicates if anything was displayed
+our sub display-current-timers(DB::Connection $connection, Bool :$skip_if_none = True, Array :$provided_timers) returns Bool is export {
+	my $timers = $provided_timers ?? $provided_timers !! current-timers($connection);
+	return False if $timers ~~ None;
+	$timers = $timers.value if $timers ~~ Some;
+	return False if $timers.elems == 0 and $skip_if_none;
+	for $timers.Array -> $timer_hash {
+		$timer_hash<projects> = timer-projects($timer_hash<id>, $connection);
+		$timer_hash<tags> = timer-tags($timer_hash<id>, $connection);
+	}
+	display-timers-as-table($timers, "Running Timers", False);
+	return True;
+}
+
 our sub timers-since(Int $epoch_since, DB::Connection $connection, Str :$order='DESC') returns Array is export {
 	find-events-since("timer", $epoch_since, $connection, order=>$order)
 }

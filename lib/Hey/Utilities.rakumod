@@ -67,7 +67,6 @@ sub at-timer-args(@args) returns List {
 }
 
 our sub extract-time-adjustment-args(@all_args) returns Array is export {
-	note("\nXXX extract-time-adjustment-args - \@all_args: " ~ @all_args.raku);
 	my $ago_args = ago-timer-args(@all_args);
 	return $ago_args.Array unless $ago_args.is-empty;
 	#return List.new().Array;

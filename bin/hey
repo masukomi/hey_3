@@ -85,6 +85,15 @@ multi sub MAIN('start',
 		~ datestring($time)
 	   );
 
+
+	my $current_timers = current-timers($connection);
+	if $current_timers ~~ Some {
+		my $timers = $current_timers.value;
+		if $timers.elems > 1 {
+			say("You have multiple running timers now:");
+			display-current-timers($connection, provided_timers => $timers);
+		}
+	}
 }
 
 
@@ -171,17 +180,8 @@ multi sub MAIN("log-interrupts",
 multi sub MAIN("running") {
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
-	my $timers = current-timers($connection);
-	if $timers ~~ Some {
-		my $timers_value = $timers.value;
-		for $timers_value.Array -> $timer_hash {
-			$timer_hash<projects> = timer-projects($timer_hash<id>, $connection);
-			$timer_hash<tags> = timer-tags($timer_hash<id>, $connection);
-		}
-		display-timers-as-table($timers_value, "Running Timers", False);
-	} else {
-		say("No timer running.");
-	}
+	my $anything_shown = display-current-timers($connection);
+	say("No timers running.") unless $anything_shown;
 }
 
 #| Record an interruption
@@ -347,10 +347,7 @@ sub compile-timer-args(@args) returns Hash {
 	my @inner_args = @args;
 	my $time_stuff = extract-time-adjustment-args(@args);
 	if $time_stuff.elems > 0 {
-		note("\nXXX compile-timer-args - \$time_stuff: " ~ $time_stuff.raku);
-		note("\nXXX compile-timer-args - initial \@inner_args: " ~ @inner_args.raku);
 		if $time_stuff[1] ~~ Str {
-			note("\nXXX compile-time-args [1] is Str ");
 			# @inner_args = 4 mins ago
 			@inner_args = @inner_args.splice(3);
 		} else {
@@ -366,7 +363,6 @@ sub compile-timer-args(@args) returns Hash {
 				}
 			}
 		}
-		note("\nXXX compile-timer-args - adjusted \@inner_args: " ~ @inner_args.raku);
 	}
 
 	my $projects = @inner_args.grep({.starts-with('@')}).map({substr($_, 1)});
