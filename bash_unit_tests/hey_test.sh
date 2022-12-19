@@ -82,7 +82,7 @@ test_08_kill_person(){
 test_08_old_interrupt_not_in_log(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob 24 hours ago)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
-	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
+	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day );
 	lines=$(echo "$output" | wc -l);
 	assert_equals "9" $lines
 }
@@ -155,8 +155,36 @@ test_13_nevermind(){
 # separately for timers & interrupts, at least not in detail.
 # We _do_ need to test that it's still wired up for start, stop, and
 # interrupt
+#
+# the following are just basic sanity checks to make sure that
+# things don't blow up. They don't test the accuracy of the data.
+#
 
 
+test_14_start_at_hour() {
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 4 @foo > /dev/null
+	assert_equals 0 $?
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind > /dev/null
+}
+test_15_start_at_time() {
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 4:30 @foo > /dev/null
+	assert_equals 0 $?
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind > /dev/null
+}
+test_16_start_at_date_and_time() {
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 12/15 4:30 @foo > /dev/null
+	assert_equals 0 $?
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind > /dev/null
+}
 
-
-
+# when you start multiple timers it should give you a heads-up about running
+# ones whenever there is more than 1
+test_17_start_multiple_timers_table() {
+	first_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start 4:30 @first)
+	timer_id=$(echo "$new_timer_output" | sed -e "s/.*(//" -e "s/).*//")
+	second_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start 4:30 @second)
+	still_first=$(echo "$second_timer_output" | grep "first" | wc -l)
+    assert_equals 1 $still_first
+	multiple_timers_note=$(echo "$second_timer_output" | grep "multiple running timers" | wc -l)
+    assert_equals 1 $multiple_timers_note
+}
