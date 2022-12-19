@@ -97,6 +97,7 @@ multi sub MAIN('start',
 }
 
 
+# hey stop
 # hey stop at 4
 # hey stop at 4:30
 # hey stop at 12/14 13:30
@@ -104,7 +105,7 @@ multi sub MAIN('start',
 # hey stop 2 hours ago
 
 #| stop an existing timer
-multi sub MAIN("stop",
+multi sub MAIN('stop',
 		*@stop_args #= optional id, and optional time adjustments (e.g. 4 minutes ago)
 		) {
 
@@ -125,9 +126,7 @@ multi sub MAIN("stop",
 			  ?? $id_match[0].Int
 			  !! -1;
 
-	my %compiled_args = compile-timer-args(
-		$id == -1 ?? @stop_args !! @stop_args.splice(1)
-	);
+	my %compiled_args = compile-timer-args(@args);
 
 	if %compiled_args<time_stuff>.elems > 0 {
 		$time = adjusted-date-time($time, %compiled_args<time_stuff>)
@@ -136,7 +135,7 @@ multi sub MAIN("stop",
 	if ($id == -1) {
 		my $maybe_event = stop-event($time.posix(), $connection);
 		if $maybe_event ~~ Some {
-			$stopped_event = $maybe_event.value;
+			$stopped_event = $maybe_event;
 		}
 	} else {
 	 	if stop-specific-event($id, $time.posix(), $connection) {
@@ -345,7 +344,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 
 sub compile-timer-args(@args) returns Hash {
 	my @inner_args = @args;
-	my $time_stuff = extract-time-adjustment-args(@args);
+	my $time_stuff = extract-time-adjustment-args(@inner_args.grep({ ! /^ <[@+]>/ }));
 	if $time_stuff.elems > 0 {
 		if $time_stuff[1] ~~ Str {
 			# @inner_args = 4 mins ago

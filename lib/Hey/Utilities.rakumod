@@ -50,7 +50,7 @@ sub ago-timer-args(@args) returns List {
 	return [];
 }
 sub at-timer-args(@args) returns List {
-	return () if @args.is-empty;
+	return () if @args.Array.is-empty;
 	return () unless @args[0] eq 'at';
 	my $match_result = @args[1..*].join(' ').match(time-regex);
 	return () unless $match_result;
@@ -58,19 +58,14 @@ sub at-timer-args(@args) returns List {
 	# 3 (3 o'clock)
 	# 3 30 (3:30)
 	# 12 6 3 30 (12/6 3:30)
-
-	# if they didn't specify a date the 1st 2 elements will be Nil
-	if ! $match_result[0]  {
-		return $match_result[2..3].map({.Int}).List;
-	}
-	return $match_result.map({ .Int }).List;
+	return $match_result.list.grep({ $_ ~~ Match }).map({.Int}).List;
 }
 
 our sub extract-time-adjustment-args(@all_args) returns Array is export {
 	my $ago_args = ago-timer-args(@all_args);
 	return $ago_args.Array unless $ago_args.is-empty;
-	#return List.new().Array;
-	return at-timer-args(@all_args).Array; #might be empty
+	my $at_timer_results =  at-timer-args(@all_args).Array; #might be empty
+	return $at_timer_results;
 }
 
 # absolute time...
