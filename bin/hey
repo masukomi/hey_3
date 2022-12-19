@@ -45,11 +45,6 @@ use Hey::Utilities;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
-constant time_units = <second seconds minute minutes hour hours day days week weeks month months year years>.Array;
-constant time_regexp = /^ (\d ** 1..2) [ ":" (\d ** 2) ]?/;
-# ex                         04           :   30
-#                             4           :   30
-#                             4
 constant uninterruptable = <start stop log log-interrupts running kill>.Array;
 
 # hey start @my_proj +tag1 +tag2
@@ -68,11 +63,11 @@ multi sub MAIN('start',
 	my %compiled_args = compile-timer-args(@start_args);
 
 	if %compiled_args<projects>.elems == 0 {
-		die("must specify at least one project to start a timer.");
+		exit-with-help("must specify at least one project to start a timer.");
 	}
 
 	if %compiled_args<time_stuff>.elems > 0 {
-		$time = adjust-date-time($time, %compiled_args<time_stuff>)
+		$time = adjusted-date-time($time, %compiled_args<time_stuff>);
 	}
 	my $event_hash = create-event($connection, "timer", $time.posix());
 	# TODO figure out why i need .Array here
@@ -123,7 +118,7 @@ multi sub MAIN("stop",
 	);
 
 	if %compiled_args<time_stuff>.elems > 0 {
-		$time = adjust-date-time($time, %compiled_args<time_stuff>)
+		$time = adjusted-date-time($time, %compiled_args<time_stuff>)
 	}
 	my $stopped_event;
 	if ($id == -1) {
@@ -139,13 +134,14 @@ multi sub MAIN("stop",
 			exit(0);
 		}
 	}
-
-	$stopped_event
-		?? say("Stopped at "
+	if $stopped_event ~~ Some {
+			say("Stopped at "
 			~ datestring($time)
 			~ " after "
-			~ timer-duration($stopped_event))
-		!! say("No timer was running");
+			~ timer-duration($stopped_event.value))
+	} else {
+		say("No timer was running");
+	}
 
 }
 
@@ -193,9 +189,7 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 	if uninterruptable.includes($name) {
 		# TODO - implement sensible defaults for the ones
 		# we can, like log, and log-interrupts
-		note("I don't think that's quite right. Here are some docs...\n");
-		note($*USAGE);
-		exit 64;
+		exit-with-help("I don't think that's quite right. Here are some docs...\n");
 	}
 
 	my $db = DB::SQLite.new(filename => guarantee-db());
@@ -204,7 +198,7 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 	my %compiled_args = compile-timer-args(@start_args);
 
 	if %compiled_args<time_stuff>.elems > 0 {
-		$time = adjust-date-time($time, %compiled_args<time_stuff>)
+		$time = adjusted-date-time($time, %compiled_args<time_stuff>)
 	}
 
 	my $event_hash = create-event($connection, "interruption", $time.posix());
@@ -280,10 +274,10 @@ multi sub MAIN("kill",
 
 sub generate-log(Str $type, Int $number, Str $duration){
 		if ! time_units.includes($duration) {
-		die("You must specify a valid duration");
+		exit-with-help("You must specify a valid duration");
 	}
 	if $number < 1 {
-		die("You must specify at least 1 unit of duration. E.g. 1 week");
+		exit-with-help("You must specify at least 1 unit of duration. E.g. 1 week");
 	}
 
 	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
@@ -342,97 +336,34 @@ sub generate-log(Str $type, Int $number, Str $duration){
 		display-interruptions-as-table(@interruptions, "All Interruptions");
 	}
 
-
 }
 
-sub has-timer-args(@args) returns Bool {
-	# 4 minutes ago
-	# at 12:30, at 12
-
-	return True if has-ago-timer-args(@args);
-	return has-at-timer-args(@args);
-}
-sub has-ago-timer-args(@args) returns Bool {
-	return ! ! (@args.elems > 2
-			and @args[2] eq "ago"
-			and @args[0].match(/^ \d+ $/)
-			and time_units.includes(@args[1])
-		   );
-}
-sub has-at-timer-args(@args) returns Bool {
-	return ! ! (@args.elems > 1
-		   and @args[0] eq "at"
-		   and @args[1].match(time_regexp))
-}
-
-sub adjust-date-time(DateTime $dt, @time_stuff) returns DateTime {
-	# @time_stuff = [4, "days", "ago"]
-	# could add support for "hence" in addition to "ago"... seems silly though.
-	return $dt if @time_stuff.is-empty;
-	if has-ago-timer-args(@time_stuff) {
-		$dt.earlier([Pair.new(@time_stuff[1].lc, @time_stuff[0])])
-	} else {
-		my $match_data = @time_stuff[1].match(time_regexp);
-		my $hour = $match_data[0].Int; # 12hr time: 3 could be 03 or 15
-		my $minutes = $match_data.elems > 1
-					   ?? $match_data[1].Int
-					   !! 0;
-
-		# swap to 24 hour time
-		my $now = DateTime.now().local;
-		my $yesterday = False;
-
-		# PLEASE REFACTOR THIS INTO SOMETHING MORE SANE
-		# This just feels ugly.
-		my $pre_noon = $now.hour < 12;
-
-		if $pre_noon and $hour > $now.hour {
-			$yesterday = True;
-			$hour += 12;
-		} elsif (! $pre_noon) and $hour < 12 {
-			if ($hour <= ($now.hour - 12)) {
-				# it's between 12PM and now
-				$hour += 12;
-			}
-			# otherwise
-			# it's got to be morning
-			# hour stays untouched
-		}
 
 
-		# midnight this morning, in this time zone
-		# there's got to be a better way
-		my $then = DateTime.new(
-			year => $now.year,
-			month => $now.month,
-			day => $now.day,
-			hour => $hour,
-			minute => $minutes,
-			second => 0,
-			timezone => $now.timezone
-		);
-
-		if $yesterday {
-			# i see you left one running from yesterday
-			$then = $then.earlier( days => 1 );
-		}
-		return $then
-	}
-}
-
-sub extract-time-adjustment-args(@args) returns Array {
-	if has-ago-timer-args(@args) {
-		return @args[0..2].Array;
-	} elsif has-at-timer-args(@args) {
-		return @args[0..1].Array;
-	}
-	return [];
-}
 sub compile-timer-args(@args) returns Hash {
 	my @inner_args = @args;
 	my $time_stuff = extract-time-adjustment-args(@args);
 	if $time_stuff.elems > 0 {
-		@inner_args = @inner_args.splice($time_stuff.elems)
+		note("\nXXX compile-timer-args - \$time_stuff: " ~ $time_stuff.raku);
+		note("\nXXX compile-timer-args - initial \@inner_args: " ~ @inner_args.raku);
+		if $time_stuff[1] ~~ Str {
+			note("\nXXX compile-time-args [1] is Str ");
+			# @inner_args = 4 mins ago
+			@inner_args = @inner_args.splice(3);
+		} else {
+			given $time_stuff.elems {
+				# @inner_args starts with "at" "<month>/<day>" "<hour>:<min>"
+				when 4  { @inner_args = @inner_args.splice(3) }
+				#2) @inner_args starts with  "at" "<hour>:<min>"
+				#1) @inner_args starts with "at" "<hour>"
+				when 1..2  { @inner_args = @inner_args.splice(2) }
+				# uhh... no.
+				default {
+					exit-with-help("I um. I got confused about your time arguments.")
+				}
+			}
+		}
+		note("\nXXX compile-timer-args - adjusted \@inner_args: " ~ @inner_args.raku);
 	}
 
 	my $projects = @inner_args.grep({.starts-with('@')}).map({substr($_, 1)});
@@ -456,4 +387,15 @@ sub guarantee-db() returns Str {
 
 sub datestring(DateTime $dt) returns Str {
 	strftime("%a, %I:%M %p", $dt.local);
+}
+
+
+# 64 is user error
+# EX_USAGE (64)	   The command was used	incorrectly, e.g., with	the
+# wrong number	of arguments, a	bad flag, a bad	syntax
+# in a	parameter, or whatever.
+sub exit-with-help(Str $message, Int $exit_code = 64) {
+	note($message);
+	note($*USAGE);
+	exit $exit_code;
 }
