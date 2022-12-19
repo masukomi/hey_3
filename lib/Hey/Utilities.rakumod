@@ -129,9 +129,13 @@ our sub adjusted-date-time(DateTime $base_time, @adjustment_args) returns DateTi
 	my $tweaked_hour_info = hour-adjustments(
 		hour-from-absolute-matches($timer_adjustments)
 	);
+	my $month = month-from-absolute-matches($timer_adjustments, $base_time);
+	# if it's January 1 and you need to backdate something to 12/31 you want it
+	# to be recorded for last year not 12 months in the future.
+	my $year =  $month <= $base_time.month ?? $base_time.year !! $base_time.year - 1;
 	my $then = DateTime.new(
-		year		=> $base_time.year,
-		month		=> month-from-absolute-matches($timer_adjustments, $base_time),
+		year		=> $year,
+		month		=> $month,
 		day         => day-from-absolute-matches($timer_adjustments, $base_time),
 		hour		=> $tweaked_hour_info<hour>,
 		minute		=> minutes-from-absolute-matches($timer_adjustments),
