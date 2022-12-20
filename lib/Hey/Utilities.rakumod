@@ -3,7 +3,7 @@ use Time::Duration;
 use Listicles;
 
 # Can't figure out how to export a constant so... methods it is.
-our sub time_units() returns Array is export {
+our sub time-units() returns Array is export {
 	<second seconds minute minutes hour hours day days week weeks month months year years>.Array;
 }
 our sub relative-time-regex returns Regex is export {
@@ -43,7 +43,7 @@ sub ago-timer-args(@args) returns List {
 	if (@args.elems > 2
 			and @args[2] eq "ago"
 			and @args[0].match(/^ \d+ $/)
-			and time_units.includes(@args[1].lc)
+			and time-units.includes(@args[1].lc)
 		   ) {
 		return [@args[0].Int, @args[1].Str.lc]
 	}

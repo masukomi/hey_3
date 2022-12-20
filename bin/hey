@@ -113,7 +113,15 @@ multi sub MAIN('stop',
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
 	my $time = DateTime.now().local;
-	my $id_match =  @stop_args
+	my $has_id = False;
+	if (@stop_args.elems > 0
+	   and @stop_args[0].match(/^ (\d+) $/)
+	   and ( @stop_args.elems == 1
+			 or ! time-units.includes(@stop_args[1]))) {
+		$has_id = True
+	}
+
+	my $id_match =  $has_id
 					 ?? @stop_args[0].match(/^ (\d+) $/)
 					 !! Nil;
 	@args = @stop_args.splice(1) if $id_match;
@@ -146,10 +154,14 @@ multi sub MAIN('stop',
 		}
 	}
 	if $stopped_event ~~ Some {
-			say("Stopped at "
+		my $event = $stopped_event.value;
+		my $projects = timer-projects($event<id>, $connection);
+
+		say("Stopped $event<id> at "
 			~ datestring($time)
+			~ " (@$($projects.map({$_<name>}).join(', @'))) "
 			~ " after "
-			~ timer-duration($stopped_event.value))
+			~ timer-duration($event))
 	} else {
 		say("No timer was running");
 	}
@@ -275,7 +287,7 @@ multi sub MAIN("kill",
 #
 
 sub generate-log(Str $type, Int $number, Str $duration){
-		if ! time_units.includes($duration) {
+		if ! time-units.includes($duration) {
 		exit-with-help("You must specify a valid duration");
 	}
 	if $number < 1 {

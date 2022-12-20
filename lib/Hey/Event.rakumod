@@ -69,12 +69,17 @@ our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connectio
 
 	$connection.query($sql, $type, $epoch_since).hashes.Array;
 }
-our sub find-last-event(Str $type, DB::Connection $connection) returns Maybe[Hash] is export {
+our sub find-last-event(Str $type, DB::Connection $connection, :$ongoing) returns Maybe[Hash] is export {
 	my $sql = q:to/END/;
 		SELECT * from events
 		WHERE type = ?
-		order by id DESC LIMIT 1;
 	END
+
+	if $ongoing ~~ Bool and $ongoing {
+		$sql ~= " AND ended_at IS NULL";
+	}
+
+	$sql ~= ' order by id DESC LIMIT 1;';
 
 	given $connection.query($sql, $type).hash {
 		when $_.elems > 0 {something($_)}
@@ -109,7 +114,7 @@ our sub stop-event(Int $stopped_at,
 				  )  returns Maybe[Hash] is export {
 	# must be a timer because you can't stop an interruption.
 	# once an interruption starts... it's too late.
-	my $maybe_last_event = find-last-event("timer", $connection);
+	my $maybe_last_event = find-last-event("timer", $connection, ongoing => True);
 	return False unless $maybe_last_event ~~ Some;
 
 	my $last_event_id = $maybe_last_event.value<id>;
