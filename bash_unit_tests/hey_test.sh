@@ -132,7 +132,7 @@ test_11_running(){
 
 test_12_timer_stop(){
 	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop)
-	assert_matches "Stopped at .* [0-9]{1,2}:[0-9]{2}.* after 4m[0-9]{1,2}s" "$stop_output"
+	assert_matches "Stopped [0-9]+ at .* [0-9]{1,2}:[0-9]{2}.* (@.*) after 4m[0-9]{1,2}s" "$stop_output"
 	date_check=$(sqlite3 $DB_LOCATION "select started_at, ended_at from events order by id DESC limit 1")
 	# test that the stop got recorded
 	# a ten digit start and end time separated by a pipe character
