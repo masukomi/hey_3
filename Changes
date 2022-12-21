@@ -6,6 +6,7 @@ ADDED
   deletes the most recent running timer
 - duration-string method in Utilities
 - timer-duration method in Timer
+-
 FIXED
 - hey running
   It was calling an old method signature that was erroring out.
@@ -13,7 +14,10 @@ FIXED
 
 CHANGED
 - hey stop
-  It now tells you the duration of the timer that you just stopped
+  Now has more verbose output:
+  Ex. "Stopped 57 at Wed, 10:40 AM (@raku)  after 1h31m"
+  I found that the extra info was very useful for confirming I'd stopped
+  the right thing, when dealing with timers that had been left running for days.
 
 ## [1.0.0-beta.5] - 2022-12-17
 ADDED
