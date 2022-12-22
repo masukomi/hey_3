@@ -188,3 +188,8 @@ test_17_start_multiple_timers_table() {
 	multiple_timers_note=$(echo "$second_timer_output" | grep "multiple running timers" | wc -l)
     assert_equals 1 $multiple_timers_note
 }
+
+test_18_list_projects() {
+	projects_lines=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION projects | wc -l)
+	assert_equals 5 $projects_lines "unexpected number of projects listed"
+}
