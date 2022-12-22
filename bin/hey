@@ -45,7 +45,7 @@ use Hey::Utilities;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
-constant uninterruptable = <start stop log log-interrupts running kill>.Array;
+constant uninterruptable = <start stop log log-interrupts running kill projects>.Array;
 
 # hey start @my_proj +tag1 +tag2
 # hey start at 4 @my_proj +tag1 +tag2
@@ -277,6 +277,12 @@ multi sub MAIN("kill",
 }
 
 
+#| lists all the projects
+multi sub MAIN("projects") {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
+	my $connection = $db.db;
+	say(find-x-names("projects", $connection).join("\n"));
+}
 
 
 

@@ -34,6 +34,9 @@ use Hey::Event;
 # find-projects-for-event
 # is-event-projected
 
+
+
+
 our sub bind-event-project(Int $event_id, Int $project_id, DB::Connection $connection) is export {
 	unless is-event-projected($event_id, $project_id, $connection) {
 		bind-x-to-event($event_id, $project_id, 'project', 'projects', $connection);

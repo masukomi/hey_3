@@ -21,7 +21,15 @@
 unit module Hey::Database;
 use DB::SQLite;
 use Definitely;
+use Listicles;
 
+
+our sub find-x-names(Str $table, DB::Connection $connection) returns Array is export {
+	my $sql = qq:to/END/;
+		SELECT name from $table order by name ASC;
+	END
+	$connection.query($sql).arrays.Array.flatten.Array;
+}
 
 our sub find-x-by-name(Str $name, Str $table, DB::Connection $connection) returns Maybe[Hash] is export {
 	my $sql = qq:to/END/;
