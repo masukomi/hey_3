@@ -142,6 +142,11 @@ our sub adjusted-date-time(DateTime $base_time, @adjustment_args) returns DateTi
 			 !! $then;
 }
 
+my sub twenty_four_hour_hour(int $hour) returns Int {
+	my $plus_12 = $hour + 12;
+	return $hour if $plus_12 > 23;
+	return $plus_12;
+}
 my sub hour-adjustments(Int $hour) returns Hash {
 	my $now = DateTime.now().local;
 	my %results = (
@@ -155,11 +160,11 @@ my sub hour-adjustments(Int $hour) returns Hash {
 
 	if $pre_noon and $hour > $now.hour {
 		%results<yesterday> = True;
-		%results<hour> += 12;
+		%results<hour> = twenty_four_hour_hour(%results<hour>);
 	} elsif (! $pre_noon) and $hour < 12 {
 		if ($hour <= ($now.hour - 12)) {
 			# it's between 12PM and now
-			%results<hour> += 12;
+			%results<hour> = twenty_four_hour_hour(%results<hour>);
 		}
 		# otherwise
 		# it's got to be morning
