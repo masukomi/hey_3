@@ -61,6 +61,10 @@ sub at-timer-args(@args) returns List {
 	return $match_result.list.grep({ $_ ~~ Match }).map({.Int}).List;
 }
 
+# TODO: modify this to return a hash
+# I'm finding myself analyzing it by counting elements returned
+# and that's a lot of magic numbers and potential failure points
+# when we change this to support more things.
 our sub extract-time-adjustment-args(@all_args) returns Array is export {
 	my $ago_args = ago-timer-args(@all_args);
 	return $ago_args.Array unless $ago_args.is-empty;
