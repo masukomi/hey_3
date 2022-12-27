@@ -32,6 +32,7 @@
   "provides": {
     "Hey::Database": "lib/Hey/Database.rakumod",
     "Hey::Event": "lib/Hey/Event.rakumod",
+    "Hey::Exceptions": "lib/Hey/Exceptions.rakumod",
     "Hey::Interruption": "lib/Hey/Interruption.rakumod",
     "Hey::Person": "lib/Hey/Person.rakumod",
     "Hey::Project": "lib/Hey/Project.rakumod",
