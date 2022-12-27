@@ -1,0 +1,81 @@
+use Test;
+use lib 'lib';
+use Hey::Utilities;
+use Hey::Exceptions;
+
+# TIP: to create epoch times use gnu date
+# installable via homebrew on macOS
+#
+# gdate -d '12/26/22 2:37:00 PM EST' +"%s"
+# 1672083420
+#
+
+
+# 12/26/22 2:37:00 PM EST
+my $now = 1672083420;
+
+
+# 12/26/22 12:30:00 PM EST
+my $twelve_thirty_pm = DateTime.new(1672075800, timezone => -18000);
+
+# 12/26/22 09:00:00 AM EST
+my $nine_am = DateTime.new(1672063200, timezone => -18000);
+
+# 12/26/22 10:00:00 AM EST
+my $ten_am = DateTime.new(1672066800, timezone => -18000);
+
+# 12/26/22 11:00:00 AM EST
+my $eleven_am = DateTime.new(1672070400, timezone => -18000);
+
+# 12/26/22 01:00:00 PM EST
+my $one_pm = DateTime.new(1672077600, timezone => -18000);
+
+# 12/26/22 08:00:00 PM EST
+my $eight_pm = DateTime.new(1672102800, timezone => -18000);
+
+# 12/26/22 09:00:00 PM EST
+my $nine_pm = DateTime.new(1672106400, timezone => -18000);
+
+is extract-time-adjustment-args(<4 minutes ago>.Array),
+   [4, "minutes"], "incorrect relative time";
+
+is extract-time-adjustment-args(<at 4:00>.Array),
+   [4, 0], "didn't correctly extract at hour";
+
+is extract-time-adjustment-args(<at 4>.Array),
+   [4], "didn't correctly extract at hour without minutes";
+
+is extract-time-adjustment-args(<at 12/6 4:00>.Array),
+   [12, 6, 4, 0], "didn't correctly extract month and time";
+
+is extract-time-adjustment-args(<at 12/6 16:00>.Array),
+   [12, 6, 16, 0], "didn't correctly extract month and time";
+
+
+
+# adjusted-date-time notes:
+# adjusted-date-time(DateTime $now, @adjustment_args, Int $started_at? )
+# the @adjustment_args are the output of extract-time-adjustment-args
+# and are just a specifically ordered collection of numbers from
+# the user's input
+
+# # at 1 PM we are entering a stop time of 8AM on an event that started at 9AM
+throws-like {adjusted-date-time($one_pm, [8,0], $nine_am.posix)}, Hey::Exceptions::Exitable, "shouldn't be able to enter an end before the start";
+
+# at 9 PM we are entering a stop time of 8PM on an event that started at 9AM
+is adjusted-date-time($nine_pm, [8,0], $nine_am.posix),
+	$eight_pm,
+   "didn't deduce time was PM";
+
+# at 9 PM we are entering a stop time of 10AM on an event that started at 9AM
+is adjusted-date-time($nine_pm, [10,0], $nine_am.posix),
+	$ten_am,
+   "unexpected time adjustment";
+
+# at 11 AM we are entering a stop time of 10AM on an event that started at 9AM
+is adjusted-date-time($eleven_am, [10,0], $nine_am.posix),
+	$ten_am,
+   "unexpected time adjustment";
+
+
+done-testing;

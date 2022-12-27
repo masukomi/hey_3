@@ -35,6 +35,7 @@ use DateTime::Format;
 use Definitely;
 use Hey::Database;
 use Hey::Event;
+use Hey::Exceptions;
 use Hey::Interruption;
 use Hey::Person;
 use Hey::Project;
@@ -57,9 +58,20 @@ constant uninterruptable = <start stop log log-interrupts running kill projects>
 multi sub MAIN('start',
 		 *@start_args #= optional time adjustment, project(s), & optional tags
 		) {
+	CATCH {
+		when Hey::Exceptions::Exitable { 
+			$*ERR.say: .message;
+			exit(.exit_code);
+		}
+        default {
+            say .Str;
+			exit(65); #  The input data was incorrect...probably.
+			#  65 is just a guess. We don't really know what happened.
+        }
+    }
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
-	my $time = DateTime.now();
+	my $time = DateTime.now().local;
 	my %compiled_args = compile-timer-args(@start_args);
 
 	if %compiled_args<projects>.elems == 0 {
@@ -109,6 +121,18 @@ multi sub MAIN('stop',
 		*@stop_args #= optional id, and optional time adjustments (e.g. 4 minutes ago)
 		) {
 
+	CATCH {
+		when Hey::Exceptions::Exitable { 
+			$*ERR.say: .message;
+			exit(.exit_code);
+		}
+        default {
+            say .Str;
+			exit(65); #  The input data was incorrect	in some	way.
+			#  65 is just a guess. We don't really know what happened.
+        }
+    }
+
 	my @args = @stop_args;
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
@@ -136,36 +160,43 @@ multi sub MAIN('stop',
 
 	my %compiled_args = compile-timer-args(@args);
 
-	if %compiled_args<time_stuff>.elems > 0 {
-		$time = adjusted-date-time($time, %compiled_args<time_stuff>)
-	}
+	my $running_event;
 	my $stopped_event;
 	if ($id == -1) {
-		my $maybe_event = stop-event($time.posix(), $connection);
-		if $maybe_event ~~ Some {
-			$stopped_event = $maybe_event;
+		my $maybe_last_event = find-last-event("timer", $connection, ongoing => True);
+		if $maybe_last_event ~~ Some {
+			$running_event = $maybe_last_event.value;
 		}
 	} else {
-	 	if stop-specific-event($id, $time.posix(), $connection) {
-			$stopped_event = find-event-by-id($id, 'timer', $connection);
-		} else {
-			say("No timer was running");
-			exit(0);
-		}
+		$running_event = find-event-by-id($id, 'timer', $connection);
 	}
-	if $stopped_event ~~ Some {
-		my $event = $stopped_event.value;
-		my $projects = timer-projects($event<id>, $connection);
 
-		say("Stopped $event<id> at "
-			~ datestring($time)
-			~ " (@$($projects.map({$_<name>}).join(', @'))) "
-			~ " after "
-			~ timer-duration($event))
+
+	if $running_event {
+		if %compiled_args<time_stuff>.elems > 0 {
+			$time = adjusted-date-time($time,
+									%compiled_args<time_stuff>,
+									$running_event<started_at>);
+		}
+
+		if stop-specific-event($running_event<id>, $time.posix(), $connection) {
+			$running_event<ended_at> = $time.posix();
+			my $projects = timer-projects($running_event<id>, $connection);
+
+			say("Stopped $running_event<id> at "
+				~ datestring($time)
+				~ " (@$($projects.map({$_<name>}).join(', @')))"
+				~ " after "
+				~ timer-duration($running_event));
+
+		} else {
+			note("error encountered while trying to stop timer $running_event<id>");
+			exit(1);
+		}
 	} else {
 		say("No timer was running");
+		exit(0);
 	}
-
 }
 
 #| see a log of recent timers
@@ -208,7 +239,7 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
-	my $time = DateTime.now();
+	my $time = DateTime.now().local;
 	my %compiled_args = compile-timer-args(@start_args);
 
 	if %compiled_args<time_stuff>.elems > 0 {

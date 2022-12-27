@@ -1,6 +1,7 @@
 unit module Hey::Utilities;
 use Time::Duration;
 use Listicles;
+use Hey::Exceptions;
 
 # Can't figure out how to export a constant so... methods it is.
 our sub time-units() returns Array is export {
@@ -82,7 +83,7 @@ my sub hour-from-absolute-matches(@matches) returns Int {
 		when 4  { return @matches[2] }
 		# hour minute
 		when 1..2  { return @matches[0] }
-		default { die("unexpected number of elements") }
+		default { Hey::Exceptions::Exitable.new("unexpected number of time elements", 65).throw }
 	}
 }
 my sub minutes-from-absolute-matches(@matches) returns Int {
@@ -93,26 +94,26 @@ my sub minutes-from-absolute-matches(@matches) returns Int {
 		when 2  { return @matches[1] }
 		# just hour
 		when 1  { return 0 }
-		default { die("unexpected number of elements") }
+		default { Hey::Exceptions::Exitable.new("unexpected number of time elements", 65).throw }
 	}
 }
 
-my sub month-from-absolute-matches(@matches, DateTime $base_time) returns Int {
+my sub month-from-absolute-matches(@matches, DateTime $now) returns Int {
 	return @matches[0] if @matches.elems == 4;
-	return $base_time.month;
+	return $now.month;
 }
-my sub day-from-absolute-matches(@matches, DateTime $base_time) returns Int {
+my sub day-from-absolute-matches(@matches, DateTime $now) returns Int {
 	return @matches[1] if @matches.elems == 4;
 
-	return $base_time.day-of-month;
+	return $now.day-of-month;
 }
 
-our sub adjusted-date-time(DateTime $base_time, @adjustment_args) returns DateTime is export {
+our sub adjusted-date-time(DateTime $now, @adjustment_args, Int $started_at? ) returns DateTime is export {
 	# @adjustment_args should be the output of extract-time-adjustment-args(@all_args)
 	my $timer_adjustments = @adjustment_args;
 
 	# no modifications necessary
-	return $base_time if $timer_adjustments.is-empty;
+	return $now if $timer_adjustments.is-empty;
 
 	#ah well...
 	#
@@ -120,23 +121,25 @@ our sub adjusted-date-time(DateTime $base_time, @adjustment_args) returns DateTi
 
 	if $timer_adjustments[1] ~~ Str {
 		# n minutes/days/etc.
-		return $base_time.earlier(
+		return $now.earlier(
 			[Pair.new($timer_adjustments[1], $timer_adjustments[0])]
 		)
 	}
 
-	my $month = month-from-absolute-matches($timer_adjustments, $base_time);
-	my $day = day-from-absolute-matches($timer_adjustments, $base_time);
+	my $month = month-from-absolute-matches($timer_adjustments, $now);
+	my $day = day-from-absolute-matches($timer_adjustments, $now);
 	my $tweaked_hour_info = { hour => hour-from-absolute-matches($timer_adjustments),
 							  yesterday => False };
+
 	# don't like this magic number bs
-	if $timer_adjustments.elems == 4 {
-		# there are only 4 if we have 12/22 04:33 type times
-		$tweaked_hour_info = hour-adjustments($tweaked_hour_info);
+	# there are 4 elems if we have 12/22 04:33 type times
+	# these have to be assumed to be correct.
+	if $timer_adjustments.elems != 4 {
+		$tweaked_hour_info = hour-adjustments($now, $tweaked_hour_info<hour>);
 	}
 	# if it's January 1 and you need to backdate something to 12/31 you want it
 	# to be recorded for last year not 12 months in the future.
-	my $year =  $month <= $base_time.month ?? $base_time.year !! $base_time.year - 1;
+	my $year =  $month <= $now.month ?? $now.year !! $now.year - 1;
 	my $then = DateTime.new(
 		year		=> $year,
 		month		=> $month,
@@ -144,20 +147,25 @@ our sub adjusted-date-time(DateTime $base_time, @adjustment_args) returns DateTi
 		hour		=> $tweaked_hour_info<hour>,
 		minute		=> minutes-from-absolute-matches($timer_adjustments),
 		second		=> 0,
-		timezone	=> $base_time.timezone
+		timezone	=> $now.timezone
 	);
-	return $tweaked_hour_info<yesterday>
+
+	my $tweaked_dt = $tweaked_hour_info<yesterday>
 	         ?? $then.earlier(days => 1)
 			 !! $then;
+	return $tweaked_dt unless defined $started_at;
+	return $tweaked_dt if $tweaked_dt.posix > $started_at;
+	Hey::Exceptions::Exitable.new( message => "Error. I calculated that stop time as $tweaked_dt but that's before the start of "
+	    ~ DateTime.new($started_at)
+        ~ " either I screwed up or you entered a stop that preceeded the start. It was probably me.", exit_code => 65).throw;
 }
 
-my sub twenty_four_hour_hour(int $hour) returns Int {
+my sub twenty-four-hour-hour(int $hour) returns Int {
 	my $plus_12 = $hour + 12;
 	return $hour if $plus_12 > 23;
 	return $plus_12;
 }
-my sub hour-adjustments(Int $hour) returns Hash {
-	my $now = DateTime.now().local;
+my sub hour-adjustments(DateTime $now, Int $hour) returns Hash {
 	my %results = (
 		hour => $hour,
 		yesterday => False
@@ -166,14 +174,13 @@ my sub hour-adjustments(Int $hour) returns Hash {
 	# PLEASE REFACTOR THIS INTO SOMETHING MORE SANE
 	# This just feels ugly.
 	my $pre_noon = $now.hour < 12;
-
 	if $pre_noon and $hour > $now.hour {
 		%results<yesterday> = True;
-		%results<hour> = twenty_four_hour_hour(%results<hour>);
+		%results<hour> = twenty-four-hour-hour(%results<hour>);
 	} elsif (! $pre_noon) and $hour < 12 {
 		if ($hour <= ($now.hour - 12)) {
 			# it's between 12PM and now
-			%results<hour> = twenty_four_hour_hour(%results<hour>);
+			%results<hour> = twenty-four-hour-hour(%results<hour>);
 		}
 		# otherwise
 		# it's got to be morning
