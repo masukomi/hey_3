@@ -199,6 +199,13 @@ This works the same as viewing your timer logs, but you say "log-interrupts" ins
 
 ![example log output](../readme_images/images/all_interruptions.png)
 
+# Other
+## Listing Projects
+`hey projects` will output a list of all the projects you've entered.
+This is useful when you've forgotten what you called something, and
+for integrations like shell autocomplete. 
+
+
 # INSTALLATION
 
 Hey is written in [Raku](https://raku.org), and uses the
