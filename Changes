@@ -1,5 +1,28 @@
 Revision history for Hey
 
+## [1.0.0-beta.7] - 2022-12-30
+ADDED
+- hey projects
+  lists all the projects you've recorded. Useful when you
+  can't remember what you called something, and for other
+  tooling, like shell autocomplete. ;)
+
+FIXED
+- How we determine AM vs PM for a time that's less than 12
+  I think this was a bug introduced in beta 6
+
+CHANGED
+- general refactoring.
+  Modules no longer exit directly, but instead raise exceptions.
+- added some raku unit tests
+  Previously there were just bash_unit tests, but with help
+  from the #RakuLang folks on Mastodon I managed to figure
+  out how to freeze time, and then that I didn't need to.
+
+  The result is some real testing around the backdating code
+  which has been the most problematic.
+
+
 ## [1.0.0-beta.6] - 2022-12-18
 ADDED
 - hey nevermind
