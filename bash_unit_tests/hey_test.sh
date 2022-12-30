@@ -137,6 +137,10 @@ test_13_timer_stop(){
 	# test that the stop got recorded
 	# a ten digit start and end time separated by a pipe character
 	assert_matches '^[0-9]{10}\|[0-9]{10}$' "$date_check" "unexpected start / end date";
+
+	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop)
+	assert_matches 65 $?
+
 }
 
 test_14_nevermind(){

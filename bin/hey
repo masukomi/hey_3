@@ -198,7 +198,7 @@ multi sub MAIN('stop',
 		}
 	} else {
 		say("No timer was running");
-		exit(0);
+		exit(65); # EX_DATAERR
 	}
 }
 
