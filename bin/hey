@@ -153,7 +153,7 @@ multi sub MAIN('stop',
 									  ?? @args.join(" ").match(relative-time-regex)
 									  !! Nil;
 	# IF we have a realtive time match
-	# then the id match is bogus.
+	# then the id match is bogus. It's really something like 4 minutes not id 4
 	my $id = ($id_match and (! $simple_relative_time_match))
 			  ?? $id_match[0].Int
 			  !! -1;
@@ -168,7 +168,10 @@ multi sub MAIN('stop',
 			$running_event = $maybe_last_event.value;
 		}
 	} else {
-		$running_event = find-event-by-id($id, 'timer', $connection);
+		my $maybe_running_event = find-event-by-id($id, 'timer', $connection);
+		if $maybe_running_event ~~ Some {
+			$running_event = $maybe_running_event.value;
+		}
 	}
 
 

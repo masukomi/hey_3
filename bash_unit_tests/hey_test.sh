@@ -79,7 +79,7 @@ test_08_kill_person(){
 
 # we're asking for a 1 day log so nothing from yesterday should be
 # in it
-test_08_old_interrupt_not_in_log(){
+test_09_old_interrupt_not_in_log(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob 24 hours ago)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
 	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day );
@@ -89,12 +89,12 @@ test_08_old_interrupt_not_in_log(){
 
 # we've just added interrupts so nothing should be in the timer
 # log yet
-test_09_timer_log_still_empty(){
+test_10_timer_log_still_empty(){
 	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log 1 day)
 	assert_equals "No timers found" "$no_content_output"
 }
 
-test_10_start_timer(){
+test_11_start_timer(){
 
 	new_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start 4 minutes ago @project_x @project_y +tag1 +tag2)
 	timer_id=$(echo "$new_timer_output" | sed -e "s/.*(//" -e "s/).*//")
@@ -124,13 +124,13 @@ test_10_start_timer(){
 	assert_matches '^[0-9]{10}\|$' "$date_check" "unexpected start / end date";
 }
 
-test_11_running(){
+test_12_running(){
 	running_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION running | grep ongoing)
 
 	assert_matches ".*ongoing.*" "$running_output"
 }
 
-test_12_timer_stop(){
+test_13_timer_stop(){
 	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop)
 	assert_matches "Stopped [0-9]+ at .* [0-9]{1,2}:[0-9]{2}.* (@.*) after 4m[0-9]{1,2}s" "$stop_output"
 	date_check=$(sqlite3 $DB_LOCATION "select started_at, ended_at from events order by id DESC limit 1")
@@ -139,7 +139,7 @@ test_12_timer_stop(){
 	assert_matches '^[0-9]{10}\|[0-9]{10}$' "$date_check" "unexpected start / end date";
 }
 
-test_13_nevermind(){
+test_14_nevermind(){
 	new_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start @foo)
 	timer_id=$(echo "$new_timer_output" | sed -e "s/.*(//" -e "s/).*//")
 	nevermind_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind)
@@ -161,17 +161,17 @@ test_13_nevermind(){
 #
 
 
-test_14_start_at_hour() {
+test_15_start_at_hour() {
 	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 4 @foo > /dev/null
 	assert_equals 0 $?
 	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind > /dev/null
 }
-test_15_start_at_time() {
+test_16_start_at_time() {
 	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 4:30 @foo > /dev/null
 	assert_equals 0 $?
 	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind > /dev/null
 }
-test_16_start_at_date_and_time() {
+test_17_start_at_date_and_time() {
 	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 12/15 4:30 @foo > /dev/null
 	assert_equals 0 $?
 	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION nevermind > /dev/null
@@ -179,9 +179,9 @@ test_16_start_at_date_and_time() {
 
 # when you start multiple timers it should give you a heads-up about running
 # ones whenever there is more than 1
-test_17_start_multiple_timers_table() {
+test_18_start_multiple_timers_table() {
 	first_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start 4:30 @first)
-	timer_id=$(echo "$new_timer_output" | sed -e "s/.*(//" -e "s/).*//")
+	timer_id=$(echo "$first_timer_output" | sed -e "s/.*(//" -e "s/).*//")
 	second_timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start 4:30 @second)
 	still_first=$(echo "$second_timer_output" | grep "first" | wc -l)
     assert_equals 1 $still_first
@@ -189,7 +189,15 @@ test_17_start_multiple_timers_table() {
     assert_equals 1 $multiple_timers_note
 }
 
-test_18_list_projects() {
+test_19_list_projects() {
 	projects_lines=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION projects | wc -l)
 	assert_equals 5 $projects_lines "unexpected number of projects listed"
+}
+
+test_20_stop_specific_timer_at_date(){
+	timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start at 12/12 01:00 @foo)
+	timer_id=$(echo "$timer_output" | sed -e "s/.*(//" -e "s/).*//")
+	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop $timer_id at 12/12 02:00)
+	assert_equals 0 $?
+	assert_matches "Stopped [0-9]+ at .* after 1h" "$stop_output"
 }
