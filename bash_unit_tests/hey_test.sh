@@ -191,6 +191,9 @@ test_18_start_multiple_timers_table() {
     assert_equals 1 $still_first
 	multiple_timers_note=$(echo "$second_timer_output" | grep "multiple running timers" | wc -l)
     assert_equals 1 $multiple_timers_note
+
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop
 }
 
 test_19_list_projects() {
