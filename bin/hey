@@ -46,7 +46,7 @@ use Hey::Utilities;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
-constant uninterruptable = <start stop log log-interrupts running kill projects>.Array;
+constant uninterruptable = < kill log log-interrupts projects running start stop summarize >.Array;
 
 # hey start @my_proj +tag1 +tag2
 # hey start at 4 @my_proj +tag1 +tag2
@@ -220,6 +220,13 @@ multi sub MAIN("log-interrupts",
 	generate-log("interruptions", $number, $duration);
 }
 
+multi sub MAIN('summarize', 'timers',
+			   Int $number, #= number of duration units
+			   Str $duration #= duration string. E.g. minutes, hours, days, etc.
+			  ) {
+	generate-log("timer-summary", $number, $duration);
+}
+
 
 #| lets you know if there are any timers running & what they are for
 multi sub MAIN("running") {
@@ -327,7 +334,7 @@ multi sub MAIN("projects") {
 #
 
 sub generate-log(Str $type, Int $number, Str $duration){
-		if ! time-units.includes($duration) {
+	if ! time-units.includes($duration) {
 		exit-with-help("You must specify a valid duration");
 	}
 	if $number < 1 {
@@ -364,7 +371,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 
 	#Such Hack!
     # So Inelegant!
-    if $type eq "timers" {
+    if $type eq 'timers' or $type eq 'timer-summary' {
 		my @timers = timers-since($since.posix(), $connection, order => 'ASC');
 		for @timers -> %timer {
 			populate-timer-relations(%timer, $connection);
@@ -373,7 +380,12 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			say("No timers found");
 			exit 0;
 		}
-		display-timers-as-table(@timers, "All Timers", False);
+		if $type eq 'timers' {
+			display-timers-as-table(@timers, "All Timers", False );
+		} else {
+			# timer-summary
+			display-timers-summary-as-table(@timers, "Summary…" );
+		}
 	} else {
 		my @interruptions = interruptions-since($since.posix(), $connection, order => 'ASC');
 		for @interruptions -> %interruption {

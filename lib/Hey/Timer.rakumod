@@ -90,6 +90,35 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 	say $table;
 }
 
+our sub display-timers-summary-as-table(@timer_hashes, $title) is export {
+
+	my $table = Prettier::Table.new(
+		title => $title,
+		field-names => ['Project', 'Total Time'],
+		align => %('Project' => 'l',
+				'Total Time' => 'r')
+	);
+
+	my $total_seconds = 0;
+	my %project_times = ();
+	for @timer_hashes -> %timer_hash {
+		if %timer_hash<ended_at> ~~ Int {
+			my $timer_seconds = (%timer_hash<ended_at> - %timer_hash<started_at>);
+			$total_seconds += $timer_seconds;
+			for %timer_hash<projects>.map({$_<name>}) -> $project {
+				%project_times.EXISTS-KEY($project)
+					?? (%project_times{$project} += $timer_seconds)
+					!! (%project_times{$project} = $timer_seconds);
+			}
+		}
+	}
+	for %project_times.pairs.sort({.key}) -> $pair {
+		$table.add-row([$pair.key, concise(duration($pair.value))]);
+	}
+	$table.add-row(['All…', concise(duration($total_seconds))]);
+	say $table;
+}
+
 our sub populate-timer-relations(Hash $timer, DB::Connection $connection) returns Hash is export {
 	$timer<projects> = timer-projects($timer<id>, $connection);
 	$timer<people> = [];

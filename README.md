@@ -180,6 +180,16 @@ If you want a specific and literal amount of time use seconds, minutes, or hours
 
 So, for example, `hey log 1 day` doesn't get you the past 24 hours worth of logs. It gets you everything from midnight yesterday. If you really want 24 hours, just say `hey log 24 hours`.
 
+## Summarized Time
+Summarizing timers follows the same pattern as generating a log of them. Asking for a summary of timers will produce a table displaying the amount of time spent on each project during that duration.
+
+`hey summarize timers <amount of time> <duration>`
+
+So, for example, `hey summarize timers 2 days` might output something like this.
+
+![example summary output](../readme_images/images/summarized_timers.png)
+
+
 # Interruptions
 
 Recording an interruption is the same as recording a timer, except that you start with the name of the person / thing that interrupted you, and project is completely optional.
