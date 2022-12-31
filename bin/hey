@@ -408,7 +408,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
 			display-timers-as-table(@timers, "All Timers", False );
 		} else {
 			# timer-summary
-			display-timers-summary-as-table(@timers, "Summary…" );
+			display-timers-summary-as-table(@timers, "$number $duration Summary…" );
 		}
 	} else {
 		my @interruptions = interruptions-since($since.posix(), $connection, order => 'ASC');
