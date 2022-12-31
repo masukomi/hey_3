@@ -90,3 +90,9 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 	say $table;
 }
 
+our sub populate-timer-relations(Hash $timer, DB::Connection $connection) returns Hash is export {
+	$timer<projects> = timer-projects($timer<id>, $connection);
+	$timer<people> = [];
+	$timer<tags> = timer-tags($timer<id>, $connection);
+	return $timer;
+}

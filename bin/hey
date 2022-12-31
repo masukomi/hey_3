@@ -367,9 +367,7 @@ sub generate-log(Str $type, Int $number, Str $duration){
     if $type eq "timers" {
 		my @timers = timers-since($since.posix(), $connection, order => 'ASC');
 		for @timers -> %timer {
-			%timer<projects> = timer-projects(%timer<id>, $connection);
-			%timer<people> = [];
-			%timer<tags> = timer-tags(%timer<id>, $connection);
+			populate-timer-relations(%timer, $connection);
 		}
 		if @timers.is-empty {
 			say("No timers found");
