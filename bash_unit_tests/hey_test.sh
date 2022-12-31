@@ -208,3 +208,11 @@ test_20_stop_specific_timer_at_date(){
 	assert_equals 0 $?
 	assert_matches "Stopped [0-9]+ at .* after 1h" "$stop_output"
 }
+
+test_21_summarize_timers(){
+
+	summary_lines=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION summarize timers 1 day)
+	summary_line_count=$(echo "$summary_lines" | wc -l);
+
+	assert_equals 11 $summary_line_count "unexpected number of projects listed"
+}
