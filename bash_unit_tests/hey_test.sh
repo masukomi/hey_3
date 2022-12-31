@@ -139,7 +139,7 @@ test_13_timer_stop(){
 	assert_matches '^[0-9]{10}\|[0-9]{10}$' "$date_check" "unexpected start / end date";
 
 	stop_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION stop)
-	assert_matches 65 $?
+	assert_equals 65 $?
 
 }
 
@@ -215,4 +215,13 @@ test_21_summarize_timers(){
 	summary_line_count=$(echo "$summary_lines" | wc -l);
 
 	assert_equals 11 $summary_line_count "unexpected number of projects listed"
+}
+
+test_22_tag_event(){
+	timer_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start @foo)
+	timer_id=$(echo "$timer_output" | sed -e "s/.*(//" -e "s/).*//")
+	tag_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION tag $timer_id +t1 t2)
+	assert_equals 0 $?
+	running_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION running | grep "t1, t2")
+	assert_equals 0 $?
 }

@@ -46,7 +46,7 @@ use Hey::Utilities;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
-constant uninterruptable = < kill log log-interrupts projects running start stop summarize >.Array;
+constant uninterruptable = < kill log log-interrupts projects running start stop summarize tag >.Array;
 
 # hey start @my_proj +tag1 +tag2
 # hey start at 4 @my_proj +tag1 +tag2
@@ -285,6 +285,30 @@ multi sub MAIN("kill",
 		say("It's dead Jim.");
 	} else {
 		note("You missed your shot! There's no timer with an id of $id.");
+		exit 64;
+	}
+}
+
+multi sub MAIN('tag',
+			   Int $id, #, #= the id of the event to tag
+			   *@tags #= the tags to associate with the event
+			  ) {
+
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $event_hash = find-event-by-id($id, "timer", $connection);
+	if $event_hash ~~ Some {
+		my @cleaned_tags =  @tags.map({.subst("+", '')}).grep({.chars > 0});
+		if @cleaned_tags.elems == 0 {
+			note("You need to pass me some tags kiddo.");
+			exit 64;
+		}
+		for @cleaned_tags -> $tag {
+			tag-event($tag, $id, $connection)
+		}
+		say("She's been well, and truly tagged.");
+	} else {
+		note("I couldn't find an event with an id of $id.");
 		exit 64;
 	}
 }

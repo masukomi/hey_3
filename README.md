@@ -210,6 +210,11 @@ This works the same as viewing your timer logs, but you say "log-interrupts" ins
 ![example log output](../readme_images/images/all_interruptions.png)
 
 # Other
+
+## Tagging After the fact
+You can add tags to a timer or interruption after it's been created, by running `hey tag <id> <list of tags>` If you ran a marathon and wanted to tag it with your thoughts afterwards you might say `hey tag 33 +hard +fulfilling`
+
+
 ## Listing Projects
 `hey projects` will output a list of all the projects you've entered.
 This is useful when you've forgotten what you called something, and
