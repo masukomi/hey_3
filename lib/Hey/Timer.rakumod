@@ -115,7 +115,16 @@ our sub display-timers-summary-as-table(@timer_hashes, $title) is export {
 	for %project_times.pairs.sort({.key}) -> $pair {
 		$table.add-row([$pair.key, concise(duration($pair.value))]);
 	}
+	my $project_chars = %project_times.keys.map({.chars}).max;
+	$table.add-row([("━" x $project_chars) , "━━━━━━━"]);
 	$table.add-row(['All…', concise(duration($total_seconds))]);
+	my $last_with_end =  @timer_hashes.grep({$_<ended_at> ~~ Int}).tail;
+	my $start_to_end = $last_with_end<ended_at>
+						- @timer_hashes.head<started_at>;
+	my $unaccounted_seconds = $start_to_end - $total_seconds;
+	$table.add-row(['Unaccounted…', concise(duration($unaccounted_seconds))]);
+
+
 	say $table;
 }
 

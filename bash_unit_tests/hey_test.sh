@@ -214,7 +214,7 @@ test_21_summarize_timers(){
 	summary_lines=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION summarize timers 1 day)
 	summary_line_count=$(echo "$summary_lines" | wc -l);
 
-	assert_equals 11 $summary_line_count "unexpected number of projects listed"
+	assert_equals 13 $summary_line_count "unexpected number of projects listed"
 }
 
 test_22_tag_event(){
