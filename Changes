@@ -1,5 +1,20 @@
 Revision history for Hey
 
+## [1.0.0-beta.8] - 2023-01-19
+ADDED:
+- hey summarize timers <number> <duration>
+  ex. hey summarize timers 2 days
+  produces a report of the total time spent on each project
+  over the course of the specified duration
+- hey tag <event id>
+  allows you to easily tag a timer/interruption after it's been created
+
+FIXED:
+- corrected a bash unit test
+
+CHANGED:
+- Stopping an invalid timer now exits with 65 not 0
+
 ## [1.0.0-beta.7] - 2022-12-30
 ADDED
 - hey projects
