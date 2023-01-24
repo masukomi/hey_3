@@ -50,8 +50,9 @@ our sub timer-duration(Hash $timer_hash) returns Str is export {
 our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = True) is export {
 	my $table = Prettier::Table.new(
 		title => $title,
-		field-names => ['ID', 'Started', 'Total', 'Projects', 'Tags'],
+		field-names => ['ID', 'Started', 'Ended', 'Total', 'Projects', 'Tags'],
 		align => %('Started' => 'l',
+				   'Ended' => 'l',
 				   'Total' => 'r',
 				   'Projects' => 'l',
 				   'Tags' => 'l')
@@ -61,11 +62,13 @@ our sub display-timers-as-table(@timer_hashes, $title, Bool $include_summary = T
 	my @all_tags = [];
 	for @timer_hashes -> %timer_hash {
 		my $dt = DateTime.new(%timer_hash<started_at>);
+		my $ended_at_dt = %timer_hash<ended_at> ?? DateTime.new(%timer_hash<ended_at>) !! Nil;
 		my @project_names = %timer_hash<projects>.map({$_<name>});
 		my @tag_names = %timer_hash<tags>.map({$_<name>});
 		$table.add-row([
 							  %timer_hash<id>,
-							  strftime("%m/%d %I:%M %p", $dt.local),
+							  strftime("%a %m/%d %I:%M %p", $dt.local),
+							  $ended_at_dt ?? strftime("%a %I:%M %p", $ended_at_dt.local) !! "",
 							  timer-duration(%timer_hash),
 							  @project_names.sort.join(", "),
 							  @tag_names.sort.join(", ")
