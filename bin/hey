@@ -46,7 +46,7 @@ use Hey::Utilities;
 
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
-constant uninterruptable = < kill log log-interrupts projects running start stop summarize tag >.Array;
+constant uninterruptable = < kill log log-interrupts projects running start stop summarize tag today >.Array;
 
 # hey start @my_proj +tag1 +tag2
 # hey start at 4 @my_proj +tag1 +tag2
@@ -210,6 +210,12 @@ multi sub MAIN("log",
 
 	generate-log("timers", $number, $duration);
 }
+
+multi sub MAIN("today") {
+
+	generate-log("timers", 1, 'day');
+}
+
 
 #| see a log of recent interruptions
 multi sub MAIN("log-interrupts",
