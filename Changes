@@ -1,5 +1,14 @@
 Revision history for Hey
 
+
+## [1.0.0-beta.9] - 2023-???????
+ADDED:
+- hey today
+  a shorthand for running "hey log 1 day". I'm finding that to be my
+  most common invocation of the logs by a wide margin and figured others
+  probably would to. Well, if anyone was using this other than me.
+
+
 ## [1.0.0-beta.8] - 2023-01-19
 ADDED:
 - hey summarize timers <number> <duration>
