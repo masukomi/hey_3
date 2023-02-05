@@ -211,6 +211,7 @@ multi sub MAIN("log",
 	generate-log("timers", $number, $duration);
 }
 
+#| see a log of today's timers
 multi sub MAIN("today") {
 
 	generate-log("timers", 1, 'day');
