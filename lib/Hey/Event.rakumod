@@ -64,7 +64,7 @@ our sub find-events-since(Str $type, Int $epoch_since, DB::Connection $connectio
 		SELECT * from events
 		WHERE type = ?
 	          AND started_at >= ?
-		order by id $order;
+		order by started_at $order;
 	END
 
 	$connection.query($sql, $type, $epoch_since).hashes.Array;
