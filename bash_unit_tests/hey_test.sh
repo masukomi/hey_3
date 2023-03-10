@@ -31,6 +31,17 @@ test_03_log_empty(){
 	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log 1 day)
 	assert_equals "No timers found" "$no_content_output"
 }
+test_03_1_summarize_timers_empty(){
+	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION summarize timers 1 day)
+	assert_equals "No timers found" "$no_content_output"
+}
+test_03_2_summarize_timers_with_running_timer() {
+	XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION start @summarize-test > /dev/null
+	test_summary_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION summarize timers 1 day)
+	rm -rf $XDG_DATA_HOME 2>&1 > /dev/null
+	assert_matches "summarize-test │         0s" "$test_summary_output"
+	assert_matches "Unaccounted…   │         0s" "$test_summary_output"
+}
 test_04_log-interrupts_empty(){
 	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
 	assert_equals "No interruptions found" "$no_content_output"
