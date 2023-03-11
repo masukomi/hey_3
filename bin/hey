@@ -27,7 +27,6 @@
 # - masukomi
 
 use v6;
-use lib 'lib';
 use DB::SQLite;
 use XDG::GuaranteedResources;
 use Listicles;
