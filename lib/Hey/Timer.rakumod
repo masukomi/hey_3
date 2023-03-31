@@ -120,7 +120,7 @@ our sub display-timers-summary-as-table(@timer_hashes, $title) is export {
 	$table.add-row([("━" x $project_chars) , "━━━━━━━"]);
 	$table.add-row(['All…', concise(duration($total_seconds))]);
 	my $last_with_end =  @timer_hashes.grep({$_<ended_at> ~~ Int}).tail;
-	my $start_to_end = $last_with_end<ended_at>
+	my $start_to_end = $last_with_end<ended_at> ~~ Int:D
 		?? $last_with_end<ended_at> - @timer_hashes.head<started_at>
 		!! 0;
 	my $unaccounted_seconds = $start_to_end - $total_seconds;
