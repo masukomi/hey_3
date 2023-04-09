@@ -43,6 +43,17 @@ use Hey::Tag;
 use Hey::Timer;
 use Hey::Utilities;
 
+
+# DEAR DEVELOPER:
+# The MAIN methods in this file have been ordered in such a way
+# as to make the "Usage:" output most benificial to users. The
+# things they're most likely to want to look up are listed towards
+# the top. It makes things harder for us to code on, but I think
+# the trade-off is worth it.
+#
+# Feel free to refactor any of this.
+
+
 # alas, these come from Date.pm6 but they're not
 # extractable from it :(
 constant uninterruptable = < kill log log-interrupts projects running start stop summarize tag today >.Array;
@@ -296,8 +307,9 @@ multi sub MAIN("kill",
 	}
 }
 
+#| add tags to a specific event, by id
 multi sub MAIN('tag',
-			   Int $id, #, #= the id of the event to tag
+			   Int $id, #= the id of the event to tag
 			   *@tags #= the tags to associate with the event
 			  ) {
 
