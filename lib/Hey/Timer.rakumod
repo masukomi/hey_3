@@ -105,15 +105,16 @@ our sub display-timers-summary-as-table(@timer_hashes, $title) is export {
 	my $total_seconds = 0;
 	my %project_times = ();
 	for @timer_hashes -> %timer_hash {
-		if %timer_hash<ended_at> ~~ Int {
-			my $timer_seconds = (%timer_hash<ended_at> - %timer_hash<started_at>);
-			$total_seconds += $timer_seconds;
-			for %timer_hash<projects>.map({$_<name>}) -> $project {
-				%project_times.EXISTS-KEY($project)
-					?? (%project_times{$project} += $timer_seconds)
-					!! (%project_times{$project} = $timer_seconds);
-			}
-		}
+		# Running timers don't have an end-time; treat them as 0-length
+		my $timer_seconds = %timer_hash<ended_at> ~~ Int:D
+			?? (%timer_hash<ended_at> - %timer_hash<started_at>)
+			!! 0;
+		$total_seconds += $timer_seconds;
+		for %timer_hash<projects>.map({$_<name>}) -> $project {
+			%project_times.EXISTS-KEY($project)
+				?? (%project_times{$project} += $timer_seconds)
+				!! (%project_times{$project} = $timer_seconds);
+	    }
 	}
 	for %project_times.pairs.sort({.key}) -> $pair {
 		$table.add-row([$pair.key, concise(duration($pair.value))]);
@@ -122,8 +123,9 @@ our sub display-timers-summary-as-table(@timer_hashes, $title) is export {
 	$table.add-row([("━" x $project_chars) , "━━━━━━━"]);
 	$table.add-row(['All…', concise(duration($total_seconds))]);
 	my $last_with_end =  @timer_hashes.grep({$_<ended_at> ~~ Int}).tail;
-	my $start_to_end = $last_with_end<ended_at>
-						- @timer_hashes.head<started_at>;
+	my $start_to_end = $last_with_end<ended_at> ~~ Int:D
+		?? $last_with_end<ended_at> - @timer_hashes.head<started_at>
+		!! 0;
 	my $unaccounted_seconds = $start_to_end - $total_seconds;
 	$table.add-row(['Unaccounted…', concise(duration($unaccounted_seconds))]);
 
