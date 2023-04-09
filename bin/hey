@@ -47,94 +47,12 @@ use Hey::Utilities;
 # extractable from it :(
 constant uninterruptable = < kill log log-interrupts projects running start stop summarize tag today >.Array;
 
-
-#| Remove an unwanted timer.
-multi sub MAIN("kill",
-			   "timer",
-			   Int $id #= the id of the timer to delete.
-			  ) {
-	my $db = DB::SQLite.new(filename => guarantee-db());
-	my $connection = $db.db;
-	my $event_hash = find-event-by-id($id, "timer", $connection);
-	if $event_hash ~~ Some {
-		kill-event($id, $connection);
-		say("It's dead Jim.");
-	} else {
-		note("You missed your shot! There's no timer with an id of $id.");
-		exit 64;
-	}
-}
-#| Remove an unwanted person / thing from interruptions
-multi sub MAIN("kill",
-			   Str $name #= the name of the person/thing you wish to.... remove the records of
-			  ){
-	my $db = DB::SQLite.new(filename => guarantee-db());
-	my $connection = $db.db;
-	my $person_hash = unwrap(find-person($name, $connection), "$name wasn't found. Maybe they know what you're planning!");
-	kill-person($person_hash<id>, $connection);
-	say("$name is dead. Long live $name.");
-}
-
-
-
-
-#| see a log of recent timers
-multi sub MAIN("log",
-			   Int $number, #= number of duration units
-			   Str $duration #= duration string. E.g. minutes, hours, days, etc.
-			  ) {
-
-	generate-log("timers", $number, $duration);
-}
-
-#| see a log of recent interruptions
-multi sub MAIN("log", "interrupts",
-			   Int $number, #= number of duration units
-			   Str $duration  #= duration string. E.g. minutes, hours, days, etc.
-			  ) {
-
-	generate-log("interruptions", $number, $duration);
-}
-
-#| Cancel & delete the most recent running timer
-multi sub MAIN("nevermind") {
-
-	my $db = DB::SQLite.new(filename => guarantee-db());
-	my $connection = $db.db;
-	my $current_timers = current-timers($connection);
-	if $current_timers ~~ Some {
-		my $timers = $current_timers.value;
-		if ! $timers.is-empty {
-			kill-event($timers.tail<id>, $connection);
-			say("We shall never speak of it again.")
-		} else {
-			note("The wasn't anything running.");
-		}
-	}
-}
-
-#| lists all the projects
-multi sub MAIN("projects") {
-	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
-	my $connection = $db.db;
-	say(find-x-names("projects", $connection).join("\n"));
-}
-
-
-#| lets you know if there are any timers running & what they are for
-multi sub MAIN("running") {
-	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
-	my $connection = $db.db;
-	my $anything_shown = display-current-timers($connection);
-	say("No timers running.") unless $anything_shown;
-}
-
 # hey start @my_proj +tag1 +tag2
 # hey start at 4 @my_proj +tag1 +tag2
 # hey start at 4:30 @my_proj +tag1 +tag2
 # hey start 4 minutes ago @my_proj +tag1 +tag2
 # hey start 2 hours ago @my_proj +tag1
-#
+
 #| Start a new timer
 multi sub MAIN('start',
 		 *@start_args #= optional time adjustment, project(s), & optional tags
@@ -283,6 +201,32 @@ multi sub MAIN('stop',
 	}
 }
 
+#| see a log of recent timers
+multi sub MAIN("log",
+			   Int $number, #= number of duration units
+			   Str $duration #= duration string. E.g. minutes, hours, days, etc.
+			  ) {
+
+	generate-log("timers", $number, $duration);
+}
+
+#| see a log of today's timers
+multi sub MAIN("today") {
+
+	generate-log("timers", 1, 'day');
+}
+
+
+
+#| see a log of recent interruptions
+multi sub MAIN("log", "interrupts",
+			   Int $number, #= number of duration units
+			   Str $duration  #= duration string. E.g. minutes, hours, days, etc.
+			  ) {
+
+	generate-log("interruptions", $number, $duration);
+}
+
 multi sub MAIN('summarize', 'timers',
 			   Int $number, #= number of duration units
 			   Str $duration #= duration string. E.g. minutes, hours, days, etc.
@@ -290,34 +234,13 @@ multi sub MAIN('summarize', 'timers',
 	generate-log("timer-summary", $number, $duration);
 }
 
-multi sub MAIN('tag',
-			   Int $id, #, #= the id of the event to tag
-			   *@tags #= the tags to associate with the event
-			  ) {
 
-	my $db = DB::SQLite.new(filename => guarantee-db());
+#| lets you know if there are any timers running & what they are for
+multi sub MAIN("running") {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
 	my $connection = $db.db;
-	my $event_hash = find-event-by-id($id, "timer", $connection);
-	if $event_hash ~~ Some {
-		my @cleaned_tags =  @tags.map({.subst("+", '')}).grep({.chars > 0});
-		if @cleaned_tags.elems == 0 {
-			note("You need to pass me some tags kiddo.");
-			exit 64;
-		}
-		for @cleaned_tags -> $tag {
-			tag-event($tag, $id, $connection)
-		}
-		say("She's been well, and truly tagged.");
-	} else {
-		note("I couldn't find an event with an id of $id.");
-		exit 64;
-	}
-}
-
-#| see a log of today's timers
-multi sub MAIN("today") {
-
-	generate-log("timers", 1, 'day');
+	my $anything_shown = display-current-timers($connection);
+	say("No timers running.") unless $anything_shown;
 }
 
 #| Record an interruption
@@ -354,6 +277,83 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 		tag-event($tag, $event_hash<id>, $connection);
 	}
 	say("Gotcha. 'twas $name");
+}
+
+#| Remove an unwanted timer.
+multi sub MAIN("kill",
+			   "timer",
+			   Int $id #= the id of the timer to delete.
+			  ) {
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $event_hash = find-event-by-id($id, "timer", $connection);
+	if $event_hash ~~ Some {
+		kill-event($id, $connection);
+		say("It's dead Jim.");
+	} else {
+		note("You missed your shot! There's no timer with an id of $id.");
+		exit 64;
+	}
+}
+
+multi sub MAIN('tag',
+			   Int $id, #, #= the id of the event to tag
+			   *@tags #= the tags to associate with the event
+			  ) {
+
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $event_hash = find-event-by-id($id, "timer", $connection);
+	if $event_hash ~~ Some {
+		my @cleaned_tags =  @tags.map({.subst("+", '')}).grep({.chars > 0});
+		if @cleaned_tags.elems == 0 {
+			note("You need to pass me some tags kiddo.");
+			exit 64;
+		}
+		for @cleaned_tags -> $tag {
+			tag-event($tag, $id, $connection)
+		}
+		say("She's been well, and truly tagged.");
+	} else {
+		note("I couldn't find an event with an id of $id.");
+		exit 64;
+	}
+}
+
+#| Cancel & delete the most recent running timer
+multi sub MAIN("nevermind") {
+
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $current_timers = current-timers($connection);
+	if $current_timers ~~ Some {
+		my $timers = $current_timers.value;
+		if ! $timers.is-empty {
+			kill-event($timers.tail<id>, $connection);
+			say("We shall never speak of it again.")
+		} else {
+			note("The wasn't anything running.");
+		}
+	}
+}
+
+#| Remove an unwanted person / thing from interruptions
+multi sub MAIN("kill",
+			   Str $name #= the name of the person/thing you wish to.... remove the records of
+			  ){
+	my $db = DB::SQLite.new(filename => guarantee-db());
+	my $connection = $db.db;
+	my $person_hash = unwrap(find-person($name, $connection), "$name wasn't found. Maybe they know what you're planning!");
+	kill-person($person_hash<id>, $connection);
+	say("$name is dead. Long live $name.");
+}
+
+
+#| lists all the projects
+multi sub MAIN("projects") {
+	my $db = DB::SQLite.new(filename => guarantee-db(), :readonly);
+	my $connection = $db.db;
+	say(find-x-names("projects", $connection).join("\n"));
 }
 
 
