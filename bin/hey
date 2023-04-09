@@ -369,6 +369,35 @@ multi sub MAIN("projects") {
 }
 
 
+#| Run a custom report
+multi sub MAIN("run",
+			   Str $name, #= Name of the script to run
+			   *@pass_throughs #= pass-through arguments for that script
+			  ) {
+	# According to the XDG_BASE_DIR spec:
+	# User-specific executable files may be stored in $HOME/.local/bin.
+	# Distributions should ensure this directory shows up in the UNIX $PATH
+	# environment variable, at an appropriate place.
+	my $path = IO::Path("$*HOME/.local/bin/hey/scripts/$name");
+
+	unless $path ~~ :r {
+		# exists and is readable
+		note("I couldn't find a script at " ~ $path.path);
+		exit 1;
+	}
+	unless $path ~~ :x {
+		# exists and is readable
+		note("This script isn't executable: " ~ $path.path);
+		exit 2;
+	}
+
+	unshift(@pass_throughs, $path.path);
+	my $proc = run(@pass_throughs, :out);
+	say( $proc.out.slurp: :close);
+
+
+}
+
 
 
 

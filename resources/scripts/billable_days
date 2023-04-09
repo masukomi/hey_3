@@ -1,0 +1,59 @@
+#!/usr/bin/env raku
+
+# Copyright (C) 2022 Kay Rhodes (a.k.a masukomi)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# YOUR CONTRIBUTIONS, FINANCIAL, OR CODE, TO MAKING THIS A BETTER TOOL
+# ARE GREATLY APPRECIATED. See https://interrupttracker.com
+
+
+# this script generates a report of days worked and the hours worked on
+# each of those days for the prior calendar month.
+#
+# So, if you run it on June 3rd it'll give you the data for May 1st - 31st.
+#
+# Yes, this is simplistic, but it's what I need for work. You are encouraged
+# to tweak it to meet your needs.
+#
+# Copy this script to ~/local/.bin/hey/scripts/billable_days and
+# execute it by calling hey run billable_days
+#
+# Alternately, put it wherever you want and execute it directly.
+# This one will be happy either way.
+#
+
+use v6;
+use DB::SQLite;
+use XDG::GuaranteedResources;
+use Listicles;
+use DateTime::Format;
+use Definitely;
+# use Hey::Database;
+# use Hey::Event;
+# use Hey::Exceptions;
+# use Hey::Interruption;
+# use Hey::Person;
+# use Hey::Project;
+# use Hey::Resourcer;
+# use Hey::Tag;
+# use Hey::Timer;
+# use Hey::Utilities;
+
+multi sub MAIN(Str $project, Str $month, Str $year?){
+  say("Project: $project Month: $month Year: $year");
+  # 1. find the beginning & end of said month
+  # 2. query all the timers for that month & project
+  shell('touch ~/workspace/hey/it_ran');
+}

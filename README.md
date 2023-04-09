@@ -13,22 +13,29 @@ Hey is a command line tool that tracks your time spent on various projects that 
 
 ``` text
 Usage:
-  hey start [<start_args> ...] -- Start a new timer
-  hey stop [<stop_args> ...] -- stop an existing timer
-  hey log <number> <duration> -- see a log of recent timers
-  hey log-interrupts <number> <duration> -- see a log of recent interruptions
-  hey running -- lets you know if there are any timers running & what they are for
-  hey <name> [<start_args> ...] -- Record an interruption
-  hey kill timer <id> -- Remove an unwanted timer.
-  hey nevermind -- Cancel & delete the most recent running timer
-  hey kill <name> -- Remove an unwanted person / thing from interruptions
+  bin/hey start [<start_args> ...] -- Start a new timer
+  bin/hey stop [<stop_args> ...] -- stop an existing timer
+  bin/hey log <number> <duration> -- see a log of recent timers
+  bin/hey today -- see a log of today's timers
+  bin/hey log interrupts <number> <duration> -- see a log of recent interruptions
+  bin/hey summarize timers <number> <duration>
+  bin/hey running -- lets you know if there are any timers running & what they are for
+  bin/hey <name> [<start_args> ...] -- Record an interruption
+  bin/hey kill timer <id> -- Remove an unwanted timer.
+  bin/hey tag <id> [<tags> ...] -- add tags to a specific event, by id
+  bin/hey nevermind -- Cancel & delete the most recent running timer
+  bin/hey kill <name> -- Remove an unwanted person / thing from interruptions
+  bin/hey projects -- lists all the projects
+  bin/hey run <name> [<pass_throughs> ...] -- Run a custom report
 
-    [<start_args> ...]    optional time adjustment, project(s), & optional tags
-    [<stop_args> ...]     optional id, and optional time adjustments (e.g. 4 minutes ago)
-    <number>              number of duration units
-    <duration>            duration string. E.g. minutes, hours, days, etc.
-    <name>                name of person / thing that interrupted you
-    <id>                  the id of the timer to delete.
+    [<start_args> ...]       optional time adjustment, project(s), & optional tags
+    [<stop_args> ...]        optional id, and optional time adjustments (e.g. 4 minutes ago)
+    <number>                 number of duration units
+    <duration>               duration string. E.g. minutes, hours, days, etc.
+    <name>                   name of person / thing that interrupted you
+    <id>                     the id of the timer to delete.
+    [<tags> ...]             the tags to associate with the event
+    [<pass_throughs> ...]    pass-through arguments for that script
 ```
 
 And now for some useful details to fill in the gaps...
@@ -219,6 +226,26 @@ You can add tags to a timer or interruption after it's been created, by running 
 `hey projects` will output a list of all the projects you've entered.
 This is useful when you've forgotten what you called something, and
 for integrations like shell autocomplete. 
+
+## Custom Reports
+The default visualization of your time worked is fine for _you_ but not 
+great if you need to generate an invoice. 
+
+That's where the `run` command comes in. You can create a custom report
+in any language, make it executable, and throw it in `~/.local/bin/hey/scripts`
+Then invoke it with `hey run my_script whatever arguments your script needs`
+The arguments will be passed on to your script and hey will output 
+whatever your script output to Standard Out. There's no restriction on 
+what your script can do. The expectation is that you'll be reaching into
+the database directly, and generating CSVs, or sending data to an external 
+API. Whatever you need.
+
+You can find an example report in `resource/scripts/billable_days` This report
+takes a project name, month, and optionally year and outputs the billable days 
+and the time worked on each, for the specified calendar month. 
+
+`hey run billable_days big_client March`
+
 
 
 # INSTALLATION
