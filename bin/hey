@@ -217,8 +217,9 @@ multi sub MAIN("today") {
 }
 
 
+
 #| see a log of recent interruptions
-multi sub MAIN("log-interrupts",
+multi sub MAIN("log", "interrupts",
 			   Int $number, #= number of duration units
 			   Str $duration  #= duration string. E.g. minutes, hours, days, etc.
 			  ) {

@@ -43,7 +43,7 @@ test_03_2_summarize_timers_with_running_timer() {
 	assert_matches "Unaccounted…   │         0s" "$test_summary_output"
 }
 test_04_log-interrupts_empty(){
-	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
+	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log interrupts 1 day)
 	assert_equals "No interruptions found" "$no_content_output"
 }
 
@@ -63,7 +63,7 @@ test_06_add-interrupt_w_proj_and_tag(){
 	assert_equals "1" $project_count;
 }
 test_07_interrupt_log(){
-	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day)
+	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log interrupts 1 day)
 	lines=$(echo "$output" | wc -l);
 	assert_equals "9" $lines
 	title_lines=$(echo "$output" | grep "All Interruptions" | wc -l)
@@ -93,7 +93,7 @@ test_08_kill_person(){
 test_09_old_interrupt_not_in_log(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob 24 hours ago)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
-	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log-interrupts 1 day );
+	output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log interrupts 1 day );
 	lines=$(echo "$output" | wc -l);
 	assert_equals "9" $lines
 }
