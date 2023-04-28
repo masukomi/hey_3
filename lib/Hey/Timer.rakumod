@@ -117,7 +117,13 @@ our sub display-timers-summary-as-table(@timer_hashes, $title) is export {
 	    }
 	}
 	for %project_times.pairs.sort({.key}) -> $pair {
-		$table.add-row([$pair.key, concise(duration($pair.value))]);
+		my $seconds = $pair.value;
+		my $time_string = concise(duration($seconds));
+		if $seconds > 3600 { # seconds in an hour 
+			$time_string ~= " (" ~ sprintf("%.2f", ($seconds / 3600)) ~ " hrs)" ;
+		}
+
+		$table.add-row([$pair.key, $time_string]);
 	}
 	my $project_chars = %project_times.keys.map({.chars}).max;
 	$table.add-row([("━" x $project_chars) , "━━━━━━━"]);
