@@ -13,20 +13,21 @@ Hey is a command line tool that tracks your time spent on various projects that 
 
 ``` text
 Usage:
-  bin/hey start [<start_args> ...] -- Start a new timer
-  bin/hey stop [<stop_args> ...] -- stop an existing timer
-  bin/hey log <number> <duration> -- see a log of recent timers
-  bin/hey today -- see a log of today's timers
-  bin/hey log interrupts <number> <duration> -- see a log of recent interruptions
-  bin/hey summarize timers <number> <duration>
-  bin/hey running -- lets you know if there are any timers running & what they are for
-  bin/hey <name> [<start_args> ...] -- Record an interruption
-  bin/hey kill timer <id> -- Remove an unwanted timer.
-  bin/hey tag <id> [<tags> ...] -- add tags to a specific event, by id
-  bin/hey nevermind -- Cancel & delete the most recent running timer
-  bin/hey kill <name> -- Remove an unwanted person / thing from interruptions
-  bin/hey projects -- lists all the projects
-  bin/hey run <name> [<pass_throughs> ...] -- Run a custom report
+  hey start [<start_args> ...] -- Start a new timer
+  hey stop [<stop_args> ...] -- stop an existing timer
+  hey log <number> <duration> -- see a log of recent timers
+  hey today -- see a log of today's timers
+  hey log interrupts <number> <duration> -- see a log of recent interruptions
+  hey summarize timers <number> <duration>
+  hey running -- lets you know if there are any timers running & what they are for
+  hey <name> [<start_args> ...] -- Record an interruption
+  hey kill timer <id> -- Remove an unwanted timer.
+  hey tag <id> [<tags> ...] -- add tags to a specific event, by id
+  hey nevermind -- Cancel & delete the most recent running timer
+  hey kill <name> -- Remove an unwanted person / thing from interruptions
+  hey projects -- lists all the projects
+  hey reports -- List available custom reports
+  hey run <name> [<pass_throughs> ...] -- Run a custom report
 
     [<start_args> ...]       optional time adjustment, project(s), & optional tags
     [<stop_args> ...]        optional id, and optional time adjustments (e.g. 4 minutes ago)

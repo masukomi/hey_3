@@ -368,7 +368,14 @@ multi sub MAIN("projects") {
 	say(find-x-names("projects", $connection).join("\n"));
 }
 
-
+#| List available custom reports
+multi sub MAIN("reports") {
+	my $path = IO::Path("$*HOME/.local/bin/hey/scripts/");
+	say("Available reports...");
+	for $path.dir -> $file {
+		say "* " ~ $file.basename.Str;
+	}
+}
 #| Run a custom report
 multi sub MAIN("run",
 			   Str $name, #= Name of the script to run
