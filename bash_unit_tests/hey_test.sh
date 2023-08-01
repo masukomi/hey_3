@@ -42,19 +42,19 @@ test_03_2_summarize_timers_with_running_timer() {
 	assert_matches "summarize-test │         0s" "$test_summary_output"
 	assert_matches "Unaccounted…   │         0s" "$test_summary_output"
 }
-test_04_log-interrupts_empty(){
+test_04_log_interrupts_empty(){
 	no_content_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION log interrupts 1 day)
 	assert_equals "No interruptions found" "$no_content_output"
 }
 
 ## Interruptions
-test_05_add-interrupt(){
+test_05_add_interrupt(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
 	event_count=$(sqlite3 $DB_LOCATION "select count(*) from events")
 	assert_equals "1" $event_count;
 }
-test_06_add-interrupt_w_proj_and_tag(){
+test_06_add_interrupt_w_proj_and_tag(){
 	new_interrupt_output=$(XDG_DATA_HOME=$XDG_DATA_HOME $HEY_INVOCATION bob @foo +bar)
 	assert_equals "Gotcha. 'twas bob" "$new_interrupt_output"
 	tag_count=$(sqlite3 $DB_LOCATION "select count(*) from tags where name='bar'")
