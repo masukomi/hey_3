@@ -375,6 +375,7 @@ multi sub MAIN("reports") {
 	for $path.dir -> $file {
 		say "* " ~ $file.basename.Str;
 	}
+	say("\nRun a report by saying \"hey run <report_name>\"");
 }
 #| Run a custom report
 multi sub MAIN("run",
