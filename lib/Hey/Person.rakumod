@@ -56,6 +56,10 @@ our sub find-person(Str $person, DB::Connection $connection) returns Maybe[Hash]
 	find-x-by-name($person, 'people', $connection);
 }
 
+our sub is-person-known(Str $person, DB::Connection $connection) returns Bool is export {
+	find-person($person, $connection) ~~ Some;
+}
+
 our sub bind-event-person(Int $event_id, Int $person_id, DB::Connection $connection) is export {
 	unless is-event-personed($event_id, $person_id, $connection) {
 		bind-x-to-event($event_id, $person_id, 'person', 'people', $connection)

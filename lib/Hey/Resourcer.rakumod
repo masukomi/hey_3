@@ -22,5 +22,6 @@ use XDG::GuaranteedResources::AbstractResourcer;
 
 unit class Hey::Resourcer does XDG::GuaranteedResources::AbstractResourcer;
 
+method app-name() { 'hey' }
 # for XDG::GuaranteedResources::AbstractResourcer
 method fetch-resource(::?CLASS:U:){%?RESOURCES;}

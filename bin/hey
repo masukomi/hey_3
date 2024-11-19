@@ -267,6 +267,18 @@ multi sub MAIN(Str $name, #= name of person / thing that interrupted you
 
 	my $db = DB::SQLite.new(filename => guarantee-db());
 	my $connection = $db.db;
+
+	# FIXME there's an is-person-known convenience method I've added for this
+	# BUT I've forgotten what I'm doing wrong to make it not be seen here.
+    if (find-person($name, $connection) !~~ Some) {
+		my $yes_no = prompt "Sorry. I don't recognize $name. Should I create a new record for them? [y/n]: ";
+
+		if ($yes_no.trim.lc ne "y") {
+			say "No worries.";
+			exit 0;
+		}
+	}
+
 	my $time = DateTime.now().local;
 	my %compiled_args = compile-timer-args(@start_args);
 
@@ -517,7 +529,12 @@ sub compile-timer-args(@args) returns Hash {
 	return %compiled_args;
 }
 
+sub guarantee-reports() returns Str {
+	my $reports_path = "data/hey/reports";
+	my $resource_path = guarantee-resource($reports_path, Hey::Resourcer);
 
+	return $resource_path;
+}
 sub guarantee-db() returns Str {
 	my $db_path = "data/hey/hey.db";
 	my $resource_path = guarantee-resource($db_path, Hey::Resourcer);
